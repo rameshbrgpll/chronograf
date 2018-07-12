@@ -46,7 +46,7 @@ const RefreshingGraph = ({
   manualRefresh, // when changed, re-mounts the component
   editQueryStatus,
   handleSetHoverTime,
-  grabDataForDownload,
+  onSeriesResponse,
   isInCEO,
 }) => {
   const prefix = (axes && axes.y.prefix) || ''
@@ -76,6 +76,7 @@ const RefreshingGraph = ({
         decimalPlaces={decimalPlaces}
         editQueryStatus={editQueryStatus}
         onSetResolution={onSetResolution}
+        onSeriesResponse={onSeriesResponse}
       />
     )
   }
@@ -99,6 +100,7 @@ const RefreshingGraph = ({
         resizerTopHeight={resizerTopHeight}
         editQueryStatus={editQueryStatus}
         onSetResolution={onSetResolution}
+        onSeriesResponse={onSeriesResponse}
       />
     )
   }
@@ -123,9 +125,10 @@ const RefreshingGraph = ({
         decimalPlaces={decimalPlaces}
         editQueryStatus={editQueryStatus}
         resizerTopHeight={resizerTopHeight}
-        grabDataForDownload={grabDataForDownload}
+        grabDataForDownload={true}
         handleSetHoverTime={handleSetHoverTime}
         onSetResolution={onSetResolution}
+        onSeriesResponse={onSeriesResponse}
       />
     )
   }
@@ -155,7 +158,7 @@ const RefreshingGraph = ({
       staticLegend={staticLegend}
       displayOptions={displayOptions}
       editQueryStatus={editQueryStatus}
-      grabDataForDownload={grabDataForDownload}
+      onSeriesResponse={onSeriesResponse}
       handleSetHoverTime={handleSetHoverTime}
       showSingleStat={type === 'line-plus-single-stat'}
       onSetResolution={onSetResolution}
@@ -180,7 +183,7 @@ RefreshingGraph.propTypes = {
   editQueryStatus: func,
   staticLegend: bool,
   onZoom: func,
-  grabDataForDownload: func,
+  onSeriesResponse: func,
   colors: colorsStringSchema,
   cellID: string,
   inView: bool,

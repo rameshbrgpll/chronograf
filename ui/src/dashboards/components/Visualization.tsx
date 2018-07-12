@@ -35,6 +35,7 @@ interface Props {
   lineColors: ColorString[]
   staticLegend: boolean
   isInCEO: boolean
+  onSeriesResponse: (newSeries: any) => void
 }
 
 const DashVisualization: SFC<Props> = ({
@@ -56,6 +57,7 @@ const DashVisualization: SFC<Props> = ({
   editQueryStatus,
   resizerTopHeight,
   thresholdsListColors,
+  onSeriesResponse,
 }) => {
   const colors: ColorString[] = getCellTypeColors({
     cellType: type,
@@ -84,6 +86,7 @@ const DashVisualization: SFC<Props> = ({
           decimalPlaces={decimalPlaces}
           fieldOptions={fieldOptions}
           isInCEO={isInCEO}
+          onSeriesResponse={onSeriesResponse}
         />
       </div>
     </div>

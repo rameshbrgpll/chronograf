@@ -31,12 +31,20 @@ class LayoutState extends Component {
     this.setState({cellData})
   }
 
+  handleSeriesResponse = (newSeries, {grabDataForDownload}) => {
+    console.log('NEW SERIES IN LAYOUT', newSeries)
+
+    if (grabDataForDownload) {
+      this.grabDataForDownload(newSeries)
+    }
+  }
+
   render() {
     return (
       <Layout
         {...this.props}
         {...this.state}
-        grabDataForDownload={this.grabDataForDownload}
+        onSeriesResponse={this.handleSeriesResponse}
         onSetResolution={this.handleSetResolution}
       />
     )
@@ -77,9 +85,9 @@ const Layout = (
     manualRefresh,
     onDeleteCell,
     onSetResolution,
+    onSeriesResponse,
     onStopAddAnnotation,
     onSummonOverlayTechnologies,
-    grabDataForDownload,
   },
   {source: defaultSource}
 ) => (
@@ -117,8 +125,8 @@ const Layout = (
         onSetResolution={onSetResolution}
         staticLegend={IS_STATIC_LEGEND(legend)}
         onStopAddAnnotation={onStopAddAnnotation}
-        grabDataForDownload={grabDataForDownload}
         queries={buildQueriesForLayouts(cell, timeRange, host)}
+        onSeriesResponse={onSeriesResponse}
         source={getSource(cell, source, sources, defaultSource)}
       />
     )}
@@ -196,7 +204,7 @@ const propTypes = {
 LayoutState.propTypes = {...propTypes}
 Layout.propTypes = {
   ...propTypes,
-  grabDataForDownload: func,
+  onSeriesResponse: func,
   cellData: arrayOf(shape({})),
 }
 
