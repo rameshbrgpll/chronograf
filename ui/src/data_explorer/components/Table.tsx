@@ -237,7 +237,7 @@ class ChronoTable extends PureComponent<Props, State> {
         editQueryStatus
       )
 
-      const results = getDeep(queriesResponse, '0.results', [])
+      const results = getDeep(queriesResponse, 'response.0.results', [])
 
       this.setState({
         isLoading: false,

@@ -62,8 +62,12 @@ const handleQueryFetchStatus = async (
     }
 
     const {data} = await proxy(payload)
+    handleSuccess(data, query, editQueryStatus)
 
-    return handleSuccess(data, query, editQueryStatus)
+    return {
+      response: data,
+      query,
+    }
   } catch (error) {
     console.error(error)
     handleError(error, query, editQueryStatus)
