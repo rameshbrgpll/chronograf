@@ -5,6 +5,11 @@ import classnames from 'classnames'
 import TemplateDrawer from 'src/shared/components/TemplateDrawer'
 import QueryStatus from 'src/shared/components/QueryStatus'
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import {
+  Controlled as ReactCodeMirror,
+  IInstance,
+  Controlled,
+} from 'react-codemirror2'
 
 import {Template, QueryConfig} from 'src/types'
 
@@ -14,6 +19,7 @@ import {
   insertTempVar,
   unMask,
 } from 'src/tempVars/constants'
+import {start} from 'repl'
 
 interface State {
   value: string
@@ -32,9 +38,20 @@ interface Props {
   templates: Template[]
 }
 
+const CODE_MIRROR_OPTIONS = {
+  tabIndex: 1,
+  mode: 'influxQL',
+  readonly: false,
+  lineNumbers: false,
+  autoRefresh: true,
+  theme: 'influxql',
+  completeSingle: false,
+  lineWrapping: true,
+}
+
 @ErrorHandling
 class QueryTextArea extends Component<Props, State> {
-  private textArea: React.RefObject<HTMLTextAreaElement>
+  private textArea: React.RefObject<Controlled>
 
   constructor(props: Props) {
     super(props)
@@ -62,18 +79,19 @@ class QueryTextArea extends Component<Props, State> {
 
     return (
       <div className="query-editor">
-        <textarea
+        <ReactCodeMirror
           className="query-editor--field"
-          onChange={this.handleChange}
-          onKeyDown={this.handleKeyDown}
-          onBlur={this.handleUpdate}
-          ref={this.textArea}
+          autoFocus={true}
+          autoCursor={true}
           value={value}
-          placeholder="Enter a query or select database, measurement, and field below and have us build one for you..."
-          autoComplete="off"
-          spellCheck={false}
-          data-test="query-editor-field"
+          options={CODE_MIRROR_OPTIONS}
+          onChange={this.handleChange}
+          onBlur={this.handleUpdate}
+          onBeforeChange={this.updateCode}
+          onTouchStart={() => {}}
+          onKeyDown={this.handleKeyDown}
         />
+
         <div
           className={classnames('varmoji', {'varmoji-rotated': isTemplating})}
         >
@@ -127,7 +145,7 @@ class QueryTextArea extends Component<Props, State> {
     })
   }
 
-  private handleKeyDown = e => {
+  private handleKeyDown = (editor, e) => {
     const {isTemplating, value} = this.state
 
     if (isTemplating) {
@@ -136,14 +154,22 @@ class QueryTextArea extends Component<Props, State> {
         case 'ArrowRight':
         case 'ArrowDown':
           e.preventDefault()
-          return this.handleTemplateReplace(this.findTempVar('next'), false)
+          return this.handleTemplateReplace(
+            editor,
+            this.findTempVar('next'),
+            false
+          )
         case 'ArrowLeft':
         case 'ArrowUp':
           e.preventDefault()
-          return this.handleTemplateReplace(this.findTempVar('previous'), false)
+          return this.handleTemplateReplace(
+            editor,
+            this.findTempVar('previous'),
+            false
+          )
         case 'Enter':
           e.preventDefault()
-          this.handleTemplateReplace(this.state.selectedTemplate, true)
+          this.handleTemplateReplace(editor, this.state.selectedTemplate, true)
           return this.closeDrawer()
         case 'Escape':
           e.preventDefault()
@@ -158,8 +184,14 @@ class QueryTextArea extends Component<Props, State> {
     }
   }
 
-  private handleTemplateReplace = (selectedTemplate, replaceWholeTemplate) => {
-    const {selectionStart, value} = this.textArea.current
+  private handleTemplateReplace = (
+    editor,
+    selectedTemplate,
+    replaceWholeTemplate
+  ) => {
+    const start = editor.getCursor()
+    const value = this.state.value
+    console.log(editor.getSelection())
     const {tempVar} = selectedTemplate
     const newTempVar = replaceWholeTemplate
       ? tempVar
@@ -179,12 +211,10 @@ class QueryTextArea extends Component<Props, State> {
     const diffInLength =
       tempVar.length - _.get(matched, '0', []).length + enterModifier
 
-    this.setState({value: templatedValue, selectedTemplate}, () =>
-      this.textArea.current.setSelectionRange(
-        selectionStart + diffInLength,
-        selectionStart + diffInLength
-      )
-    )
+    const end = {line: start.line, ch: start.ch + tempVar.length}
+    this.setState({value: templatedValue, selectedTemplate}, () => {
+      editor.setSelection(end, start)
+    })
   }
 
   private findTempVar = direction => {
@@ -211,10 +241,9 @@ class QueryTextArea extends Component<Props, State> {
     return templates[0]
   }
 
-  private handleChange = () => {
+  private handleChange = (editor, data, value) => {
     const {templates} = this.props
     const {selectedTemplate} = this.state
-    const value = this.textArea.current.value
 
     // mask matches that will confuse our regex
     const masked = applyMasks(value)
@@ -222,9 +251,9 @@ class QueryTextArea extends Component<Props, State> {
 
     if (matched && !_.isEmpty(templates)) {
       // maintain cursor poition
-      const start = this.textArea.current.selectionStart
+      // const start = editor.selectionStart
 
-      const end = this.textArea.current.selectionEnd
+      // const end = editor.selectionEnd
       const filterText = matched[0].substr(1).toLowerCase()
 
       const filteredTemplates = templates.filter(t =>
@@ -242,7 +271,7 @@ class QueryTextArea extends Component<Props, State> {
         filteredTemplates,
         value,
       })
-      this.textArea.current.setSelectionRange(start, end)
+      // editor.setSelectionRange(start, end)
     } else {
       this.setState({isTemplating: false, value})
     }
@@ -250,6 +279,14 @@ class QueryTextArea extends Component<Props, State> {
 
   private handleUpdate = () => {
     this.props.onUpdate(this.state.value)
+  }
+
+  private updateCode = (
+    _: IInstance,
+    __: EditorChange,
+    value: string
+  ): void => {
+    this.setState({value})
   }
 }
 
