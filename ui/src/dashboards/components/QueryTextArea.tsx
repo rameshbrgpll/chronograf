@@ -19,10 +19,10 @@ import {
   insertTempVar,
   unMask,
 } from 'src/tempVars/constants'
-import {start} from 'repl'
 
 interface State {
   value: string
+  editorValue: string
   isTemplating: boolean
   selectedTemplate: {
     tempVar: string
@@ -58,6 +58,7 @@ class QueryTextArea extends Component<Props, State> {
     this.textArea = React.createRef()
     this.state = {
       value: this.props.query,
+      editorValue: this.props.query,
       isTemplating: false,
       selectedTemplate: {
         tempVar: _.get(this.props.templates, ['0', 'tempVar'], ''),
@@ -72,6 +73,7 @@ class QueryTextArea extends Component<Props, State> {
     } = this.props
     const {
       value,
+      editorValue,
       isTemplating,
       selectedTemplate,
       filteredTemplates,
@@ -83,7 +85,7 @@ class QueryTextArea extends Component<Props, State> {
           className="query-editor--field"
           autoFocus={true}
           autoCursor={true}
-          value={value}
+          value={editorValue}
           options={CODE_MIRROR_OPTIONS}
           onChange={this.handleChange}
           onBlur={this.handleUpdate}
@@ -190,7 +192,7 @@ class QueryTextArea extends Component<Props, State> {
     replaceWholeTemplate
   ) => {
     const start = editor.getCursor()
-    const value = this.state.value
+    const editorValue = this.state.editorValue
     console.log(editor.getSelection())
     const {tempVar} = selectedTemplate
     const newTempVar = replaceWholeTemplate
@@ -198,7 +200,7 @@ class QueryTextArea extends Component<Props, State> {
       : tempVar.substring(0, tempVar.length - 1)
 
     // mask matches that will confuse our regex
-    const masked = applyMasks(value)
+    const masked = applyMasks(editorValue)
     const matched = masked.match(MATCH_INCOMPLETE_TEMPLATES)
 
     let templatedValue
@@ -211,10 +213,19 @@ class QueryTextArea extends Component<Props, State> {
     const diffInLength =
       tempVar.length - _.get(matched, '0', []).length + enterModifier
 
+    let value = this.state.value
+
+    if (replaceWholeTemplate) {
+      value = templatedValue
+    }
+
     const end = {line: start.line, ch: start.ch + tempVar.length}
-    this.setState({value: templatedValue, selectedTemplate}, () => {
-      editor.setSelection(end, start)
-    })
+    this.setState(
+      {editorValue: templatedValue, selectedTemplate, value},
+      () => {
+        editor.setSelection(end, start)
+      }
+    )
   }
 
   private findTempVar = direction => {
@@ -245,15 +256,17 @@ class QueryTextArea extends Component<Props, State> {
     const {templates} = this.props
     const {selectedTemplate} = this.state
 
+    if (this.state.isTemplating) {
+      return
+    }
+
     // mask matches that will confuse our regex
     const masked = applyMasks(value)
     const matched = masked.match(MATCH_INCOMPLETE_TEMPLATES)
 
     if (matched && !_.isEmpty(templates)) {
       // maintain cursor poition
-      // const start = editor.selectionStart
 
-      // const end = editor.selectionEnd
       const filterText = matched[0].substr(1).toLowerCase()
 
       const filteredTemplates = templates.filter(t =>
@@ -267,11 +280,11 @@ class QueryTextArea extends Component<Props, State> {
 
       this.setState({
         isTemplating: true,
+        editorValue: value,
         selectedTemplate: newTemplate,
         filteredTemplates,
         value,
       })
-      // editor.setSelectionRange(start, end)
     } else {
       this.setState({isTemplating: false, value})
     }
@@ -286,7 +299,7 @@ class QueryTextArea extends Component<Props, State> {
     __: EditorChange,
     value: string
   ): void => {
-    this.setState({value})
+    this.setState({editorValue: value})
   }
 }
 
