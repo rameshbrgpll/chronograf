@@ -51,11 +51,12 @@ const CODE_MIRROR_OPTIONS = {
 
 @ErrorHandling
 class QueryTextArea extends Component<Props, State> {
-  private textArea: React.RefObject<Controlled>
+  private editor: IInstance
 
   constructor(props: Props) {
     super(props)
-    this.textArea = React.createRef()
+    this.editor = null
+
     this.state = {
       value: this.props.query,
       editorValue: this.props.query,
@@ -72,7 +73,6 @@ class QueryTextArea extends Component<Props, State> {
       config: {status},
     } = this.props
     const {
-      value,
       editorValue,
       isTemplating,
       selectedTemplate,
@@ -92,6 +92,7 @@ class QueryTextArea extends Component<Props, State> {
           onBeforeChange={this.updateCode}
           onTouchStart={() => {}}
           onKeyDown={this.handleKeyDown}
+          editorDidMount={this.setEditor}
         />
 
         <div
@@ -147,7 +148,11 @@ class QueryTextArea extends Component<Props, State> {
     })
   }
 
-  private handleKeyDown = (editor, e) => {
+  private setEditor = editor => {
+    this.editor = editor
+  }
+
+  private handleKeyDown = (_, e) => {
     const {isTemplating, value} = this.state
 
     if (isTemplating) {
@@ -156,22 +161,14 @@ class QueryTextArea extends Component<Props, State> {
         case 'ArrowRight':
         case 'ArrowDown':
           e.preventDefault()
-          return this.handleTemplateReplace(
-            editor,
-            this.findTempVar('next'),
-            false
-          )
+          return this.handleTemplateReplace(this.findTempVar('next'), false)
         case 'ArrowLeft':
         case 'ArrowUp':
           e.preventDefault()
-          return this.handleTemplateReplace(
-            editor,
-            this.findTempVar('previous'),
-            false
-          )
+          return this.handleTemplateReplace(this.findTempVar('previous'), false)
         case 'Enter':
           e.preventDefault()
-          this.handleTemplateReplace(editor, this.state.selectedTemplate, true)
+          this.handleTemplateReplace(this.state.selectedTemplate, true)
           return this.closeDrawer()
         case 'Escape':
           e.preventDefault()
@@ -186,14 +183,10 @@ class QueryTextArea extends Component<Props, State> {
     }
   }
 
-  private handleTemplateReplace = (
-    editor,
-    selectedTemplate,
-    replaceWholeTemplate
-  ) => {
-    const start = editor.getCursor()
+  private handleTemplateReplace = (selectedTemplate, replaceWholeTemplate) => {
+    const start = this.editor.getCursor()
     const editorValue = this.state.editorValue
-    console.log(editor.getSelection())
+
     const {tempVar} = selectedTemplate
     const newTempVar = replaceWholeTemplate
       ? tempVar
@@ -223,7 +216,7 @@ class QueryTextArea extends Component<Props, State> {
     this.setState(
       {editorValue: templatedValue, selectedTemplate, value},
       () => {
-        editor.setSelection(end, start)
+        this.editor.setSelection(end, start)
       }
     )
   }
@@ -252,7 +245,7 @@ class QueryTextArea extends Component<Props, State> {
     return templates[0]
   }
 
-  private handleChange = (editor, data, value) => {
+  private handleChange = (__, ___, value) => {
     const {templates} = this.props
     const {selectedTemplate} = this.state
 
