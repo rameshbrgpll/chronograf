@@ -5,11 +5,7 @@ import classnames from 'classnames'
 import TemplateDrawer from 'src/shared/components/TemplateDrawer'
 import QueryStatus from 'src/shared/components/QueryStatus'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {
-  Controlled as ReactCodeMirror,
-  IInstance,
-  Controlled,
-} from 'react-codemirror2'
+import {Controlled as ReactCodeMirror, IInstance} from 'react-codemirror2'
 
 import {Template, QueryConfig} from 'src/types'
 
@@ -48,6 +44,8 @@ const CODE_MIRROR_OPTIONS = {
   completeSingle: false,
   lineWrapping: true,
 }
+
+const NOOP = () => {}
 
 @ErrorHandling
 class QueryTextArea extends Component<Props, State> {
@@ -90,7 +88,7 @@ class QueryTextArea extends Component<Props, State> {
           onChange={this.handleChange}
           onBlur={this.handleUpdate}
           onBeforeChange={this.updateCode}
-          onTouchStart={() => {}}
+          onTouchStart={NOOP}
           onKeyDown={this.handleKeyDown}
           editorDidMount={this.setEditor}
         />
