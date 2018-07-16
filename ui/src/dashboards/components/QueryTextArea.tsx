@@ -6,6 +6,8 @@ import TemplateDrawer from 'src/shared/components/TemplateDrawer'
 import QueryStatus from 'src/shared/components/QueryStatus'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Controlled as ReactCodeMirror, IInstance} from 'react-codemirror2'
+import {QUERY_TEMPLATES, QueryTemplate} from 'src/data_explorer/constants'
+import Dropdown from 'src/shared/components/Dropdown'
 
 import {Template, QueryConfig} from 'src/types'
 
@@ -17,6 +19,7 @@ import {
 } from 'src/tempVars/constants'
 
 interface State {
+  focused: boolean
   value: string
   editorValue: string
   isTemplating: boolean
@@ -56,6 +59,7 @@ class QueryTextArea extends Component<Props, State> {
     this.editor = null
 
     this.state = {
+      focused: false,
       value: this.props.query,
       editorValue: this.props.query,
       isTemplating: false,
@@ -79,26 +83,42 @@ class QueryTextArea extends Component<Props, State> {
 
     return (
       <div className="query-editor">
-        <ReactCodeMirror
-          className="query-editor--field"
-          autoFocus={true}
-          autoCursor={true}
-          value={editorValue}
-          options={CODE_MIRROR_OPTIONS}
-          onChange={this.handleChange}
-          onBlur={this.handleUpdate}
-          onBeforeChange={this.updateCode}
-          onTouchStart={NOOP}
-          onKeyDown={this.handleKeyDown}
-          editorDidMount={this.setEditor}
-        />
-
+        <div className={this.queryCodeClassName}>
+          <ReactCodeMirror
+            className="query-editor--field"
+            autoFocus={true}
+            autoCursor={true}
+            value={editorValue}
+            options={CODE_MIRROR_OPTIONS}
+            onChange={this.handleChange}
+            onBlur={this.handleBlur}
+            onFocus={this.handleFocus}
+            onBeforeChange={this.updateCode}
+            onTouchStart={NOOP}
+            onKeyDown={this.handleKeyDown}
+            editorDidMount={this.setEditor}
+          />
+        </div>
         <div
           className={classnames('varmoji', {'varmoji-rotated': isTemplating})}
         >
           <div className="varmoji-container">
             <div className="varmoji-front">
-              <QueryStatus status={status} />
+              <QueryStatus status={status}>
+                <Dropdown
+                  items={QUERY_TEMPLATES}
+                  selected="Query Templates"
+                  onChoose={this.handleChooseMetaQuery}
+                  className="dropdown-140 query-editor--templates"
+                  buttonSize="btn-xs"
+                />
+                <button
+                  className="btn btn-xs btn-primary query-editor--submit"
+                  onClick={this.handleUpdate}
+                >
+                  Submit Query
+                </button>
+              </QueryStatus>
             </div>
             <div className="varmoji-back">
               {isTemplating ? (
@@ -121,6 +141,34 @@ class QueryTextArea extends Component<Props, State> {
     if (this.props.query !== nextProps.query) {
       this.setState({value: nextProps.query})
     }
+  }
+
+  private handleChooseMetaQuery = (template: QueryTemplate): void => {
+    const value = template.query
+    this.setState({
+      isTemplating: false,
+      editorValue: value,
+      value,
+      selectedTemplate: {
+        tempVar: _.get(this.props.templates, ['0', 'tempVar'], ''),
+      },
+      filteredTemplates: this.props.templates,
+    })
+  }
+
+  private get queryCodeClassName(): string {
+    const {focused} = this.state
+
+    return classnames('query-editor--code', {focus: focused})
+  }
+
+  private handleBlur = (): void => {
+    this.setState({focused: false})
+    this.handleUpdate()
+  }
+
+  private handleFocus = (): void => {
+    this.setState({focused: true})
   }
 
   private handleCloseDrawer = () => {
@@ -286,8 +334,8 @@ class QueryTextArea extends Component<Props, State> {
   }
 
   private updateCode = (
-    _: IInstance,
-    __: EditorChange,
+    __: IInstance,
+    ___: EditorChange,
     value: string
   ): void => {
     this.setState({editorValue: value})
