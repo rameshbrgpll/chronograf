@@ -63,9 +63,7 @@ class QueryTextArea extends Component<Props, State> {
       value: this.props.query,
       editorValue: this.props.query,
       isTemplating: false,
-      selectedTemplate: {
-        tempVar: _.get(this.props.templates, ['0', 'tempVar'], ''),
-      },
+      selectedTemplate: this.defaultSelectedTemplate,
       filteredTemplates: this.props.templates,
     }
   }
@@ -149,9 +147,7 @@ class QueryTextArea extends Component<Props, State> {
       isTemplating: false,
       editorValue: value,
       value,
-      selectedTemplate: {
-        tempVar: _.get(this.props.templates, ['0', 'tempVar'], ''),
-      },
+      selectedTemplate: this.defaultSelectedTemplate,
       filteredTemplates: this.props.templates,
     })
   }
@@ -171,6 +167,12 @@ class QueryTextArea extends Component<Props, State> {
     this.setState({focused: true})
   }
 
+  private get defaultSelectedTemplate() {
+    return {
+      tempVar: _.get(this.props.templates, ['0', 'tempVar'], ''),
+    }
+  }
+
   private handleCloseDrawer = () => {
     this.setState({isTemplating: false})
   }
@@ -188,9 +190,7 @@ class QueryTextArea extends Component<Props, State> {
   private closeDrawer = () => {
     this.setState({
       isTemplating: false,
-      selectedTemplate: {
-        tempVar: _.get(this.props.templates, ['0', 'tempVar'], ''),
-      },
+      selectedTemplate: this.defaultSelectedTemplate,
     })
   }
 
