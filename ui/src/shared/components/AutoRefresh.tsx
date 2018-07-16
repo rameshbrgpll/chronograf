@@ -3,7 +3,7 @@ import _ from 'lodash'
 
 import {fetchTimeSeries} from 'src/shared/apis/query'
 import {DEFAULT_TIME_SERIES} from 'src/shared/constants/series'
-import {TimeSeriesServerResponse} from 'src/types/series'
+import {TimeSeriesServerResponse, TimeSeriesResponse} from 'src/types/series'
 import {Template, Source} from 'src/types'
 
 interface Axes {
@@ -104,14 +104,16 @@ const AutoRefresh = (
       const templates: Template[] = _.get(this.props, 'templates', [])
 
       try {
-        const newSeries = await fetchTimeSeries(
+        const timeSeries = await fetchTimeSeries(
           source,
           queries,
           resolution,
           templates,
           editQueryStatus
         )
-
+        const newSeries = timeSeries.map((response: TimeSeriesResponse) => ({
+          response,
+        }))
         const isLastQuerySuccessful = this.hasResultsForQuery(newSeries)
 
         this.setState({
