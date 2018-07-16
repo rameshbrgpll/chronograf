@@ -31,8 +31,7 @@ export interface Props {
   templates: Template[]
   editQueryStatus: () => void
   onSetResolution?: (resolution: number) => void
-  grabForDownload?: boolean
-  onSeriesResponse?: (timeSeries: TimeSeriesServerResponse[]) => void
+  grabDataForDownload: (timeSeries: TimeSeriesServerResponse[]) => void
 }
 
 interface State {
@@ -84,7 +83,6 @@ const AutoRefresh = (
       const {
         source,
         editQueryStatus,
-        onSeriesResponse,
         grabDataForDownload,
         inView,
         queries,
@@ -122,8 +120,8 @@ const AutoRefresh = (
           isFetching: false,
         })
 
-        if (onSeriesResponse) {
-          onSeriesResponse(newSeries, {grabDataForDownload})
+        if (grabDataForDownload) {
+          grabDataForDownload(newSeries)
         }
       } catch (err) {
         console.error(err)

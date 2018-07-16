@@ -204,7 +204,6 @@ class CellEditorOverlay extends Component<Props, State> {
             editQueryStatus={editQueryStatus}
             staticLegend={isStaticLegend}
             isInCEO={true}
-            onSeriesResponse={this.handleSeriesResponse}
           />
           <CEOBottom>
             <OverlayControls
@@ -261,10 +260,6 @@ class CellEditorOverlay extends Component<Props, State> {
         onResetFocus={this.handleResetFocus}
       />
     )
-  }
-
-  private handleSeriesResponse = response => {
-    console.log('CEO SERIES RESPONSE', response)
   }
 
   private get formattedSources(): SourcesModels.SourceOption[] {
