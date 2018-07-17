@@ -153,7 +153,7 @@ class QueryTextArea extends Component<Props, State> {
 
   public componentWillReceiveProps(nextProps: Props) {
     if (this.props.query !== nextProps.query) {
-      this.setState({value: nextProps.query})
+      this.setState({value: nextProps.query, editorValue: nextProps.query})
     }
   }
 
