@@ -36,7 +36,6 @@ interface State {
   }
   isViewingQueryText: boolean
   filteredTemplates: Template[]
-  rawText: string
 }
 
 interface Props {
@@ -59,6 +58,7 @@ const CODE_MIRROR_OPTIONS = {
 }
 
 const NOOP = () => {}
+const NULL_RESOLUTION = null
 
 @ErrorHandling
 class QueryTextArea extends Component<Props, State> {
@@ -76,7 +76,6 @@ class QueryTextArea extends Component<Props, State> {
       isViewingQueryText: false,
       selectedTemplate: this.defaultSelectedTemplate,
       filteredTemplates: this.props.templates,
-      rawText: null,
     }
   }
 
@@ -155,7 +154,7 @@ class QueryTextArea extends Component<Props, State> {
 
   private handleChooseMetaQuery = (template: QueryTemplate): void => {
     if (_.isEqual(template, SHOW_QUERY_TEMPLATE_VALUES)) {
-      this.showUntemplatedQuery()
+      this.showTemplateValues()
     } else if (_.isEqual(template, HIDE_QUERY_TEMPLATE_VALUES)) {
       this.setTemplateQuery(this.state.value)
     } else {
@@ -181,17 +180,20 @@ class QueryTextArea extends Component<Props, State> {
     return classnames('query-editor--code', {focus: focused})
   }
 
-  private showUntemplatedQuery = async () => {
+  private showTemplateValues = async () => {
     const {value: queryText} = this.state
 
-    const rawText = await replaceQueryTemplates(
+    const queryWithTemplateValues = await replaceQueryTemplates(
       queryText,
       this.props.config.source,
       this.props.templates,
-      null
+      NULL_RESOLUTION
     )
 
-    this.setState({editorValue: rawText, isViewingQueryText: true})
+    this.setState({
+      editorValue: queryWithTemplateValues,
+      isViewingQueryText: true,
+    })
   }
 
   private setTemplateQuery(value: string) {
