@@ -31,8 +31,6 @@ export const INITIAL_HEIGHTS: InitialHeights = {
   visualization: '33.334%',
 }
 
-const SEPARATOR: string = 'SEPARATOR'
-
 export interface QueryTemplate {
   text: string
   query: string
@@ -46,14 +44,6 @@ type Template = QueryTemplate | Separator
 
 export const SEPARATOR_TEMPLATE: Separator = {
   text: 'SEPERATOR',
-}
-
-export const SHOW_QUERY_TEMPLATE_VALUES = {
-  text: 'SHOW RAW QUERY',
-}
-
-export const HIDE_QUERY_TEMPLATE_VALUES = {
-  text: 'HIDE RAW QUERY',
 }
 
 export type QueryTemplateList = Template[]

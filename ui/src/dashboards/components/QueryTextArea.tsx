@@ -9,8 +9,6 @@ import {Controlled as ReactCodeMirror, IInstance} from 'react-codemirror2'
 import {
   QUERY_TEMPLATES,
   SEPARATOR_TEMPLATE,
-  SHOW_QUERY_TEMPLATE_VALUES,
-  HIDE_QUERY_TEMPLATE_VALUES,
   QueryTemplate,
   QueryTemplateList,
 } from 'src/data_explorer/constants'
@@ -62,6 +60,16 @@ const TEMPLATE_START = ':'.length
 
 const NOOP = () => {}
 const NULL_RESOLUTION = null
+
+const SHOW_QUERY_TEMPLATE_VALUES: QueryTemplate = {
+  text: 'SHOW RAW QUERY',
+  query: null,
+}
+
+const HIDE_QUERY_TEMPLATE_VALUES: QueryTemplate = {
+  text: 'HIDE RAW QUERY',
+  query: null,
+}
 
 @ErrorHandling
 class QueryTextArea extends Component<Props, State> {
@@ -174,7 +182,7 @@ class QueryTextArea extends Component<Props, State> {
     return [this.viewTemplateValues, SEPARATOR_TEMPLATE, ...QUERY_TEMPLATES]
   }
 
-  private get viewTemplateValues() {
+  private get viewTemplateValues(): QueryTemplate {
     if (this.state.isShowingTemplateValues) {
       return HIDE_QUERY_TEMPLATE_VALUES
     }
@@ -188,7 +196,7 @@ class QueryTextArea extends Component<Props, State> {
     return classnames('query-editor--code', {focus: focused})
   }
 
-  private showTemplateValues = async () => {
+  private showTemplateValues = async (): Promise<void> => {
     const {value: queryText} = this.state
 
     const queryWithTemplateValues = await replaceQueryTemplates(
