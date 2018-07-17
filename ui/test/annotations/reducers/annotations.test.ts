@@ -13,7 +13,6 @@ const a1: Annotation = {
   id: '1',
   startTime: 1515716169000,
   endTime: 1515716169000,
-  type: '',
   text: 'you have no swoggels',
   links: {self: 'to/thine/own/self/be/true'},
 }
@@ -22,7 +21,6 @@ const a2: Annotation = {
   id: '2',
   startTime: 1515716169000,
   endTime: 1515716169002,
-  type: '',
   text: 'you have so many swoggels',
   links: {self: 'self/in/eye/of/beholder'},
 }

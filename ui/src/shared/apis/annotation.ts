@@ -11,7 +11,6 @@ interface ServerAnnotation {
   startTime: string
   endTime: string
   text: string
-  type: string
   links: {self: string}
 }
 

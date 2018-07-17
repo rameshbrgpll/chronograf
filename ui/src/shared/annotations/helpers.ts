@@ -8,7 +8,6 @@ export const EDITING = 'editing'
 export const TEMP_ANNOTATION: Annotation = {
   id: 'tempAnnotation',
   text: 'Name Me',
-  type: '',
   startTime: null,
   endTime: null,
   links: {self: ''},
