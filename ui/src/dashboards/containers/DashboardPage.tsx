@@ -11,6 +11,7 @@ import DashboardHeader from 'src/dashboards/components/DashboardHeader'
 import Dashboard from 'src/dashboards/components/Dashboard'
 import ManualRefresh from 'src/shared/components/ManualRefresh'
 import TemplateControlBar from 'src/tempVars/components/TemplateControlBar'
+import AnnotationControlBar from 'src/shared/components/AnnotationControlBar'
 
 // Actions
 import * as dashboardActions from 'src/dashboards/actions'
@@ -68,10 +69,8 @@ interface Props extends ManualRefreshProps, WithRouterProps {
   dashboards: DashboardsModels.Dashboard[]
   handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
   autoRefresh: number
-  templateControlBarVisibilityToggled: () => AppActions.TemplateControlBarVisibilityToggledActionCreator
   timeRange: QueriesModels.TimeRange
   zoomedTimeRange: QueriesModels.TimeRange
-  showTemplateControlBar: boolean
   inPresentationMode: boolean
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   cellQueryStatus: {
@@ -115,6 +114,7 @@ interface State {
   windowHeight: number
   selectedCell: DashboardsModels.Cell | null
   dashboardLinks: DashboardsModels.DashboardSwitcherLinks
+  showToolbars: boolean
 }
 
 @ErrorHandling
@@ -127,6 +127,7 @@ class DashboardPage extends Component<Props, State> {
       selectedCell: null,
       windowHeight: window.innerHeight,
       dashboardLinks: EMPTY_LINKS,
+      showToolbars: false,
     }
   }
 
@@ -189,7 +190,6 @@ class DashboardPage extends Component<Props, State> {
       timeRange: {lower, upper},
       zoomedTimeRange,
       zoomedTimeRange: {lower: zoomedLower, upper: zoomedUpper},
-      showTemplateControlBar,
       dashboard,
       dashboardID,
       lineColors,
@@ -252,7 +252,7 @@ class DashboardPage extends Component<Props, State> {
       templatesIncludingDashTime = []
     }
 
-    const {dashboardLinks} = this.state
+    const {dashboardLinks, showToolbars} = this.state
 
     return (
       <div className="page dashboard-page">
@@ -286,23 +286,26 @@ class DashboardPage extends Component<Props, State> {
           onRenameDashboard={this.handleRenameDashboard}
           dashboardLinks={dashboardLinks}
           activeDashboard={dashboard ? dashboard.name : ''}
-          showTemplateControlBar={showTemplateControlBar}
+          showToolbars={showToolbars}
           handleChooseAutoRefresh={handleChooseAutoRefresh}
           handleChooseTimeRange={this.handleChooseTimeRange}
-          onToggleTempVarControls={this.handleToggleTempVarControls}
+          onToggleShowToolbars={this.handleToggleShowToolbars}
           handleClickPresentationButton={handleClickPresentationButton}
         />
-        {inPresentationMode || (
-          <TemplateControlBar
-            templates={dashboard && dashboard.templates}
-            meRole={meRole}
-            isUsingAuth={isUsingAuth}
-            onSaveTemplates={this.handleSaveTemplateVariables}
-            onPickTemplate={this.handlePickTemplate}
-            isOpen={showTemplateControlBar}
-            source={source}
-          />
-        )}
+        {!inPresentationMode &&
+          showToolbars && (
+            <>
+              <TemplateControlBar
+                templates={dashboard && dashboard.templates}
+                meRole={meRole}
+                isUsingAuth={isUsingAuth}
+                onSaveTemplates={this.handleSaveTemplateVariables}
+                onPickTemplate={this.handlePickTemplate}
+                source={source}
+              />
+              <AnnotationControlBar />
+            </>
+          )}
         {dashboard ? (
           <Dashboard
             source={source}
@@ -462,8 +465,8 @@ class DashboardPage extends Component<Props, State> {
     }
   }
 
-  private handleToggleTempVarControls = (): void => {
-    this.props.templateControlBarVisibilityToggled()
+  private handleToggleShowToolbars = (): void => {
+    this.setState({showToolbars: !this.state.showToolbars})
   }
 
   private handleZoomedTimeRange = (
@@ -504,7 +507,7 @@ const mstp = (state, {params: {dashboardID}}) => {
   const {
     app: {
       ephemeral: {inPresentationMode},
-      persisted: {autoRefresh, showTemplateControlBar},
+      persisted: {autoRefresh},
     },
     dashboardUI: {dashboards, cellQueryStatus, zoomedTimeRange},
     sources,
@@ -543,7 +546,6 @@ const mstp = (state, {params: {dashboardID}}) => {
     isUsingAuth,
     cellQueryStatus,
     inPresentationMode,
-    showTemplateControlBar,
     selectedCell,
     thresholdsListType,
     thresholdsListColors,
@@ -571,8 +573,6 @@ const mdtp = {
   updateTemplateQueryParams: dashboardActions.updateTemplateQueryParams,
   updateQueryParams: dashboardActions.updateQueryParams,
   handleChooseAutoRefresh: appActions.setAutoRefresh,
-  templateControlBarVisibilityToggled:
-    appActions.templateControlBarVisibilityToggled,
   handleClickPresentationButton: appActions.delayEnablePresentationMode,
   errorThrown: errorActions.errorThrown,
   notify: notifyActions.notify,

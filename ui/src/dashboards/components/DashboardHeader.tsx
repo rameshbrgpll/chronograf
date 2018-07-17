@@ -25,8 +25,8 @@ interface Props {
   onManualRefresh: () => void
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   onAddCell: () => void
-  onToggleTempVarControls: () => void
-  showTemplateControlBar: boolean
+  onToggleShowToolbars?: () => void
+  showToolbars?: boolean
   zoomedTimeRange: QueriesModels.TimeRange
   onRenameDashboard: (name: string) => Promise<void>
   dashboardLinks: DashboardsModels.DashboardSwitcherLinks
@@ -78,7 +78,7 @@ class DashboardHeader extends Component<Props> {
       <>
         <GraphTips />
         {this.addCellButton}
-        {this.tempVarsButton}
+        {this.toolsButton}
         <AutoRefreshDropdown
           onChoose={handleChooseAutoRefresh}
           onManualRefresh={onManualRefresh}
@@ -120,22 +120,18 @@ class DashboardHeader extends Component<Props> {
     }
   }
 
-  private get tempVarsButton(): JSX.Element {
-    const {
-      dashboard,
-      showTemplateControlBar,
-      onToggleTempVarControls,
-    } = this.props
+  private get toolsButton(): JSX.Element {
+    const {dashboard, showToolbars, onToggleShowToolbars} = this.props
 
     if (dashboard) {
       return (
         <div
           className={classnames('btn btn-default btn-sm', {
-            active: showTemplateControlBar,
+            active: showToolbars,
           })}
-          onClick={onToggleTempVarControls}
+          onClick={onToggleShowToolbars}
         >
-          <span className="icon cube" />Template Variables
+          <span className="icon cube" />Tools
         </div>
       )
     }
