@@ -348,18 +348,15 @@ class QueryTextArea extends Component<Props, State> {
   private handleChange = (__, ___, value) => {
     const {templates} = this.props
     const {selectedTemplate} = this.state
+    const isChanged = value !== this.state.value
 
-    if (this.state.isViewingQueryText) {
+    if (!isChanged) {
       return
     }
 
     // mask matches that will confuse our regex
     const masked = applyMasks(value)
     const matched = masked.match(MATCH_INCOMPLETE_TEMPLATES)
-
-    if (this.state.isTemplating && matched) {
-      return
-    }
 
     if (matched && !_.isEmpty(templates)) {
       // maintain cursor poition
