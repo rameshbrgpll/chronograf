@@ -34,7 +34,7 @@ interface State {
   selectedTemplate: {
     tempVar: string
   }
-  isViewingQueryText: boolean
+  isShowingTemplateValues: boolean
   filteredTemplates: Template[]
 }
 
@@ -75,7 +75,7 @@ class QueryTextArea extends Component<Props, State> {
       value: this.props.query,
       editorValue: this.props.query,
       isTemplating: false,
-      isViewingQueryText: false,
+      isShowingTemplateValues: false,
       selectedTemplate: this.defaultSelectedTemplate,
       filteredTemplates: this.props.templates,
     }
@@ -94,7 +94,7 @@ class QueryTextArea extends Component<Props, State> {
 
     const options = {
       ...CODE_MIRROR_OPTIONS,
-      readOnly: this.state.isViewingQueryText,
+      readOnly: this.state.isShowingTemplateValues,
     }
 
     return (
@@ -174,7 +174,7 @@ class QueryTextArea extends Component<Props, State> {
   }
 
   private get viewTemplateValues() {
-    if (this.state.isViewingQueryText) {
+    if (this.state.isShowingTemplateValues) {
       return HIDE_QUERY_TEMPLATE_VALUES
     }
 
@@ -199,14 +199,14 @@ class QueryTextArea extends Component<Props, State> {
 
     this.setState({
       editorValue: queryWithTemplateValues,
-      isViewingQueryText: true,
+      isShowingTemplateValues: true,
     })
   }
 
   private setTemplateQuery(value: string) {
     this.setState({
       isTemplating: false,
-      isViewingQueryText: false,
+      isShowingTemplateValues: false,
       selectedTemplate: this.defaultSelectedTemplate,
       filteredTemplates: this.props.templates,
       editorValue: value,
@@ -356,12 +356,16 @@ class QueryTextArea extends Component<Props, State> {
     return templates[0]
   }
 
-  private handleChange = (__, ___, value) => {
+  private handleChange = (
+    __: IInstance,
+    ___: EditorChange,
+    value: string
+  ): void => {
     const {templates} = this.props
     const {selectedTemplate} = this.state
     const isChanged = value !== this.state.value
 
-    if (!isChanged || this.state.isViewingQueryText) {
+    if (!isChanged || this.state.isShowingTemplateValues) {
       return
     }
 
