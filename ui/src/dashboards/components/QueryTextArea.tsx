@@ -57,6 +57,8 @@ const CODE_MIRROR_OPTIONS = {
   lineWrapping: true,
 }
 
+const TEMPLATE_START = ':'.length
+
 const NOOP = () => {}
 const NULL_RESOLUTION = null
 
@@ -303,20 +305,29 @@ class QueryTextArea extends Component<Props, State> {
     }
 
     const enterModifier = replaceWholeTemplate ? 0 : -1
-    const diffInLength =
-      tempVar.length - _.get(matched, '0', []).length + enterModifier
 
-    let value = this.state.value
+    const startIndex = TEMPLATE_START + masked.indexOf(_.get(matched, '0'))
+    const tempVarLength = newTempVar.length + enterModifier
 
-    if (replaceWholeTemplate) {
-      value = templatedValue
+    let templateStart = start
+    let templateEnd = start
+
+    if (matched) {
+      templateStart = {
+        line: start.line,
+        ch: startIndex,
+      }
+
+      templateEnd = {
+        line: start.line,
+        ch: startIndex + tempVarLength,
+      }
     }
 
-    const end = {line: start.line, ch: start.ch + tempVar.length}
     this.setState(
-      {editorValue: templatedValue, selectedTemplate, value},
+      {editorValue: templatedValue, selectedTemplate, value: templatedValue},
       () => {
-        this.editor.setSelection(end, start)
+        this.editor.setSelection(templateEnd, templateStart)
       }
     )
   }
