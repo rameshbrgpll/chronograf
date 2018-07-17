@@ -90,6 +90,11 @@ class QueryTextArea extends Component<Props, State> {
       filteredTemplates,
     } = this.state
 
+    const options = {
+      ...CODE_MIRROR_OPTIONS,
+      readOnly: this.state.isViewingQueryText,
+    }
+
     return (
       <div className="query-editor">
         <div className={this.queryCodeClassName}>
@@ -98,7 +103,7 @@ class QueryTextArea extends Component<Props, State> {
             autoFocus={true}
             autoCursor={true}
             value={editorValue}
-            options={CODE_MIRROR_OPTIONS}
+            options={options}
             onChange={this.handleChange}
             onBlur={this.handleBlur}
             onFocus={this.handleFocus}
@@ -247,7 +252,7 @@ class QueryTextArea extends Component<Props, State> {
     this.editor = editor
   }
 
-  private handleKeyDown = (_, e) => {
+  private handleKeyDown = (__, e) => {
     const {isTemplating, value} = this.state
 
     if (isTemplating) {
