@@ -1,7 +1,7 @@
 import React, {Component} from 'react'
 import {connect} from 'react-redux'
 
-import Annotation from 'src/shared/components/Annotation'
+import AnnotationComponent from 'src/shared/components/Annotation'
 import NewAnnotation from 'src/shared/components/NewAnnotation'
 import {SourceContext} from 'src/CheckSources'
 
@@ -17,20 +17,18 @@ import {
 import {visibleAnnotations} from 'src/shared/annotations/helpers'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {AnnotationInterface, DygraphClass, Source} from 'src/types'
+import {Annotation, DygraphClass, Source} from 'src/types'
 import {UpdateAnnotationAction} from 'src/types/actions/annotations'
 
 interface Props {
   dWidth: number
   staticLegendHeight: number
-  annotations: AnnotationInterface[]
+  annotations: Annotation[]
   mode: string
   xAxisRange: [number, number]
   dygraph: DygraphClass
   isTempHovering: boolean
-  handleUpdateAnnotation: (
-    annotation: AnnotationInterface
-  ) => UpdateAnnotationAction
+  handleUpdateAnnotation: (annotation: Annotation) => UpdateAnnotationAction
   handleDismissAddingAnnotation: () => void
   handleAddingAnnotationSuccess: () => void
   handleMouseEnterTempAnnotation: () => void
@@ -75,7 +73,7 @@ class Annotations extends Component<Props> {
             </SourceContext.Consumer>
           )}
         {this.annotations.map(a => (
-          <Annotation
+          <AnnotationComponent
             key={a.id}
             mode={mode}
             xAxisRange={xAxisRange}

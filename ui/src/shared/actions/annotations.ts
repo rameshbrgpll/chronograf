@@ -32,7 +32,7 @@ export const mouseLeaveTempAnnotation = (): AnnotationsActions.MouseLeaveTempAnn
 })
 
 export const loadAnnotations = (
-  annotations: AnnotationsModels.AnnotationInterface[]
+  annotations: AnnotationsModels.Annotation[]
 ): AnnotationsActions.LoadAnnotationsAction => ({
   type: 'LOAD_ANNOTATIONS',
   payload: {
@@ -41,7 +41,7 @@ export const loadAnnotations = (
 })
 
 export const updateAnnotation = (
-  annotation: AnnotationsModels.AnnotationInterface
+  annotation: AnnotationsModels.Annotation
 ): AnnotationsActions.UpdateAnnotationAction => ({
   type: 'UPDATE_ANNOTATION',
   payload: {
@@ -50,7 +50,7 @@ export const updateAnnotation = (
 })
 
 export const deleteAnnotation = (
-  annotation: AnnotationsModels.AnnotationInterface
+  annotation: AnnotationsModels.Annotation
 ): AnnotationsActions.DeleteAnnotationAction => ({
   type: 'DELETE_ANNOTATION',
   payload: {
@@ -59,7 +59,7 @@ export const deleteAnnotation = (
 })
 
 export const addAnnotation = (
-  annotation: AnnotationsModels.AnnotationInterface
+  annotation: AnnotationsModels.Annotation
 ): AnnotationsActions.AddAnnotationAction => ({
   type: 'ADD_ANNOTATION',
   payload: {
@@ -69,7 +69,7 @@ export const addAnnotation = (
 
 export const addAnnotationAsync = (
   createUrl: string,
-  annotation: AnnotationsModels.AnnotationInterface
+  annotation: AnnotationsModels.Annotation
 ) => async dispatch => {
   dispatch(addAnnotation(annotation))
   const savedAnnotation = await api.createAnnotation(createUrl, annotation)
@@ -88,14 +88,14 @@ export const getAnnotationsAsync: AnnotationsActions.GetAnnotationsDispatcher = 
 }
 
 export const deleteAnnotationAsync = (
-  annotation: AnnotationsModels.AnnotationInterface
+  annotation: AnnotationsModels.Annotation
 ) => async dispatch => {
   await api.deleteAnnotation(annotation)
   dispatch(deleteAnnotation(annotation))
 }
 
 export const updateAnnotationAsync = (
-  annotation: AnnotationsModels.AnnotationInterface
+  annotation: AnnotationsModels.Annotation
 ) => async dispatch => {
   await api.updateAnnotation(annotation)
   dispatch(updateAnnotation(annotation))

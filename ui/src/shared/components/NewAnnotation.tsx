@@ -9,17 +9,17 @@ import * as actions from 'src/shared/actions/annotations'
 
 import {DYGRAPH_CONTAINER_XLABEL_MARGIN} from 'src/shared/constants'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {AnnotationInterface, DygraphClass, Source} from 'src/types'
+import {Annotation, DygraphClass, Source} from 'src/types'
 
 interface Props {
   dygraph: DygraphClass
   source: Source
   isTempHovering: boolean
-  tempAnnotation: AnnotationInterface
-  addAnnotationAsync: (url: string, a: AnnotationInterface) => void
+  tempAnnotation: Annotation
+  addAnnotationAsync: (url: string, a: Annotation) => void
   onDismissAddingAnnotation: () => void
   onAddingAnnotationSuccess: () => void
-  onUpdateAnnotation: (a: AnnotationInterface) => void
+  onUpdateAnnotation: (a: Annotation) => void
   onMouseEnterTempAnnotation: () => void
   onMouseLeaveTempAnnotation: () => void
   staticLegendHeight: number

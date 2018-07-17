@@ -7,7 +7,7 @@ import AnnotationInput from 'src/shared/components/AnnotationInput'
 import * as actions from 'src/shared/actions/annotations'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {AnnotationInterface} from 'src/types'
+import {Annotation} from 'src/types'
 
 interface TimeStampProps {
   time: string
@@ -31,17 +31,17 @@ interface Span {
 }
 
 interface State {
-  annotation: AnnotationInterface
+  annotation: Annotation
 }
 
 interface Props {
   isEditing: boolean
-  annotation: AnnotationInterface
+  annotation: Annotation
   timestamp: string
   onMouseLeave: (e: MouseEvent<HTMLDivElement>) => {}
   annotationState: AnnotationState
-  deleteAnnotationAsync: (a: AnnotationInterface) => void
-  updateAnnotationAsync: (a: AnnotationInterface) => void
+  deleteAnnotationAsync: (a: Annotation) => void
+  updateAnnotationAsync: (a: Annotation) => void
   span: Span
 }
 

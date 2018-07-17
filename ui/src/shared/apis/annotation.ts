@@ -1,5 +1,5 @@
 import AJAX from 'src/utils/ajax'
-import {AnnotationInterface} from 'src/types'
+import {Annotation} from 'src/types'
 
 const msToRFCString = (ms: number) =>
   ms && new Date(Math.round(ms)).toISOString()
@@ -15,24 +15,19 @@ interface ServerAnnotation {
   links: {self: string}
 }
 
-const annoToMillisecond = (
-  annotation: ServerAnnotation
-): AnnotationInterface => ({
+const annoToMillisecond = (annotation: ServerAnnotation): Annotation => ({
   ...annotation,
   startTime: rfcStringToMS(annotation.startTime),
   endTime: rfcStringToMS(annotation.endTime),
 })
 
-const annoToRFC = (annotation: AnnotationInterface): ServerAnnotation => ({
+const annoToRFC = (annotation: Annotation): ServerAnnotation => ({
   ...annotation,
   startTime: msToRFCString(annotation.startTime),
   endTime: msToRFCString(annotation.endTime),
 })
 
-export const createAnnotation = async (
-  url: string,
-  annotation: AnnotationInterface
-) => {
+export const createAnnotation = async (url: string, annotation: Annotation) => {
   const data = annoToRFC(annotation)
   const response = await AJAX({method: 'POST', url, data})
   return annoToMillisecond(response.data)
@@ -51,12 +46,12 @@ export const getAnnotations = async (
   return data.annotations.map(annoToMillisecond)
 }
 
-export const deleteAnnotation = async (annotation: AnnotationInterface) => {
+export const deleteAnnotation = async (annotation: Annotation) => {
   const url = annotation.links.self
   await AJAX({method: 'DELETE', url})
 }
 
-export const updateAnnotation = async (annotation: AnnotationInterface) => {
+export const updateAnnotation = async (annotation: Annotation) => {
   const url = annotation.links.self
   const data = annoToRFC(annotation)
   await AJAX({method: 'PATCH', url, data})

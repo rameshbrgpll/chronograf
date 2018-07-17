@@ -1,12 +1,12 @@
 import {ADDING, EDITING, TEMP_ANNOTATION} from 'src/shared/annotations/helpers'
 
 import {Action} from 'src/types/actions/annotations'
-import {AnnotationInterface} from 'src/types'
+import {Annotation} from 'src/types'
 
 export interface AnnotationState {
   mode: string
   isTempHovering: boolean
-  annotations: AnnotationInterface[]
+  annotations: Annotation[]
 }
 
 const initialState = {

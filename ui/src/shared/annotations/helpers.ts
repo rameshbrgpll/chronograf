@@ -1,11 +1,11 @@
-import {AnnotationInterface} from 'src/types'
+import {Annotation} from 'src/types'
 
 export const ANNOTATION_MIN_DELTA = 0.5
 
 export const ADDING = 'adding'
 export const EDITING = 'editing'
 
-export const TEMP_ANNOTATION: AnnotationInterface = {
+export const TEMP_ANNOTATION: Annotation = {
   id: 'tempAnnotation',
   text: 'Name Me',
   type: '',
@@ -16,9 +16,9 @@ export const TEMP_ANNOTATION: AnnotationInterface = {
 
 export const visibleAnnotations = (
   xAxisRange: [number, number],
-  annotations: AnnotationInterface[] = [],
+  annotations: Annotation[] = [],
   tempAnnotationID: string
-): AnnotationInterface[] => {
+): Annotation[] => {
   const [xStart, xEnd] = xAxisRange
 
   if (xStart === 0 && xEnd === 0) {

@@ -11,7 +11,7 @@ import * as actions from 'src/shared/actions/annotations'
 import AnnotationTooltip from 'src/shared/components/AnnotationTooltip'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {AnnotationInterface, DygraphClass} from 'src/types'
+import {Annotation, DygraphClass} from 'src/types'
 
 interface State {
   isMouseOver: boolean
@@ -19,12 +19,12 @@ interface State {
 }
 
 interface Props {
-  annotation: AnnotationInterface
+  annotation: Annotation
   mode: string
   xAxisRange: [number, number]
   dygraph: DygraphClass
-  updateAnnotation: (a: AnnotationInterface) => void
-  updateAnnotationAsync: (a: AnnotationInterface) => void
+  updateAnnotation: (a: Annotation) => void
+  updateAnnotationAsync: (a: Annotation) => void
   staticLegendHeight: number
 }
 

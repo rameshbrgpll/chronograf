@@ -1,5 +1,5 @@
 import reducer from 'src/shared/reducers/annotations'
-import {AnnotationInterface} from 'src/types'
+import {Annotation} from 'src/types'
 import {AnnotationState} from 'src/shared/reducers/annotations'
 
 import {
@@ -9,7 +9,7 @@ import {
   updateAnnotation,
 } from 'src/shared/actions/annotations'
 
-const a1: AnnotationInterface = {
+const a1: Annotation = {
   id: '1',
   startTime: 1515716169000,
   endTime: 1515716169000,
@@ -18,7 +18,7 @@ const a1: AnnotationInterface = {
   links: {self: 'to/thine/own/self/be/true'},
 }
 
-const a2: AnnotationInterface = {
+const a2: Annotation = {
   id: '2',
   startTime: 1515716169000,
   endTime: 1515716169002,

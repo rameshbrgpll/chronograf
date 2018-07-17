@@ -47,28 +47,28 @@ export interface MouseLeaveTempAnnotationAction {
 export interface LoadAnnotationsAction {
   type: 'LOAD_ANNOTATIONS'
   payload: {
-    annotations: AnnotationData.AnnotationInterface[]
+    annotations: AnnotationData.Annotation[]
   }
 }
 
 export interface UpdateAnnotationAction {
   type: 'UPDATE_ANNOTATION'
   payload: {
-    annotation: AnnotationData.AnnotationInterface
+    annotation: AnnotationData.Annotation
   }
 }
 
 export interface DeleteAnnotationAction {
   type: 'DELETE_ANNOTATION'
   payload: {
-    annotation: AnnotationData.AnnotationInterface
+    annotation: AnnotationData.Annotation
   }
 }
 
 export interface AddAnnotationAction {
   type: 'ADD_ANNOTATION'
   payload: {
-    annotation: AnnotationData.AnnotationInterface
+    annotation: AnnotationData.Annotation
   }
 }
 
