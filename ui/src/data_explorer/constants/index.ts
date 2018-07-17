@@ -44,6 +44,18 @@ export interface Separator {
 
 type Template = QueryTemplate | Separator
 
+export const SEPARATOR_TEMPLATE = {
+  text: `${SEPARATOR}`,
+}
+
+export const SHOW_QUERY_TEMPLATE_VALUES = {
+  text: 'SHOW RAW QUERY',
+}
+
+export const HIDE_QUERY_TEMPLATE_VALUES = {
+  text: 'HIDE RAW QUERY',
+}
+
 export const QUERY_TEMPLATES: Template[] = [
   {
     text: 'Show Databases',
@@ -57,9 +69,7 @@ export const QUERY_TEMPLATES: Template[] = [
     text: 'Drop Database',
     query: 'DROP DATABASE "db_name"',
   },
-  {
-    text: `${SEPARATOR}`,
-  },
+  SEPARATOR_TEMPLATE,
   {
     text: 'Show Measurements',
     query: 'SHOW MEASUREMENTS ON "db_name"',
@@ -73,9 +83,7 @@ export const QUERY_TEMPLATES: Template[] = [
     query:
       'SHOW TAG VALUES ON "db_name" FROM "measurement_name" WITH KEY = "tag_key"',
   },
-  {
-    text: `${SEPARATOR}`,
-  },
+  SEPARATOR_TEMPLATE,
   {
     text: 'Show Retention Policies',
     query: 'SHOW RETENTION POLICIES on "db_name"',
@@ -89,9 +97,7 @@ export const QUERY_TEMPLATES: Template[] = [
     text: 'Drop Retention Policy',
     query: 'DROP RETENTION POLICY "rp_name" ON "db_name"',
   },
-  {
-    text: `${SEPARATOR}`,
-  },
+  SEPARATOR_TEMPLATE,
   {
     text: 'Show Continuous Queries',
     query: 'SHOW CONTINUOUS QUERIES',
@@ -105,9 +111,7 @@ export const QUERY_TEMPLATES: Template[] = [
     text: 'Drop Continuous Query',
     query: 'DROP CONTINUOUS QUERY "cq_name" ON "db_name"',
   },
-  {
-    text: `${SEPARATOR}`,
-  },
+  SEPARATOR_TEMPLATE,
   {
     text: 'Show Users',
     query: 'SHOW USERS',
@@ -125,9 +129,7 @@ export const QUERY_TEMPLATES: Template[] = [
     text: 'Drop User',
     query: 'DROP USER "username"',
   },
-  {
-    text: `${SEPARATOR}`,
-  },
+  SEPARATOR_TEMPLATE,
   {
     text: 'Show Stats',
     query: 'SHOW STATS',

@@ -6,10 +6,18 @@ import TemplateDrawer from 'src/shared/components/TemplateDrawer'
 import QueryStatus from 'src/shared/components/QueryStatus'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Controlled as ReactCodeMirror, IInstance} from 'react-codemirror2'
-import {QUERY_TEMPLATES, QueryTemplate} from 'src/data_explorer/constants'
+import {
+  QUERY_TEMPLATES,
+  SEPARATOR_TEMPLATE,
+  SHOW_QUERY_TEMPLATE_VALUES,
+  HIDE_QUERY_TEMPLATE_VALUES,
+  QueryTemplate,
+} from 'src/data_explorer/constants'
 import Dropdown from 'src/shared/components/Dropdown'
+import {replace as replaceQueryTemplates} from 'src/shared/apis/query'
 
 import {Template, QueryConfig} from 'src/types'
+import {EditorChange} from 'codemirror'
 
 import {
   MATCH_INCOMPLETE_TEMPLATES,
@@ -26,7 +34,9 @@ interface State {
   selectedTemplate: {
     tempVar: string
   }
+  isViewingQueryText: boolean
   filteredTemplates: Template[]
+  rawText: string
 }
 
 interface Props {
@@ -63,8 +73,10 @@ class QueryTextArea extends Component<Props, State> {
       value: this.props.query,
       editorValue: this.props.query,
       isTemplating: false,
+      isViewingQueryText: false,
       selectedTemplate: this.defaultSelectedTemplate,
       filteredTemplates: this.props.templates,
+      rawText: null,
     }
   }
 
@@ -104,7 +116,7 @@ class QueryTextArea extends Component<Props, State> {
             <div className="varmoji-front">
               <QueryStatus status={status}>
                 <Dropdown
-                  items={QUERY_TEMPLATES}
+                  items={this.queryTemplates}
                   selected="Query Templates"
                   onChoose={this.handleChooseMetaQuery}
                   className="dropdown-140 query-editor--templates"
@@ -142,20 +154,55 @@ class QueryTextArea extends Component<Props, State> {
   }
 
   private handleChooseMetaQuery = (template: QueryTemplate): void => {
-    const value = template.query
-    this.setState({
-      isTemplating: false,
-      editorValue: value,
-      value,
-      selectedTemplate: this.defaultSelectedTemplate,
-      filteredTemplates: this.props.templates,
-    })
+    if (_.isEqual(template, SHOW_QUERY_TEMPLATE_VALUES)) {
+      this.showUntemplatedQuery()
+    } else if (_.isEqual(template, HIDE_QUERY_TEMPLATE_VALUES)) {
+      this.setTemplateQuery(this.state.value)
+    } else {
+      this.setTemplateQuery(template.query)
+    }
+  }
+
+  private get queryTemplates() {
+    return [this.viewTemplateValues, SEPARATOR_TEMPLATE, ...QUERY_TEMPLATES]
+  }
+
+  private get viewTemplateValues() {
+    if (this.state.isViewingQueryText) {
+      return HIDE_QUERY_TEMPLATE_VALUES
+    }
+
+    return SHOW_QUERY_TEMPLATE_VALUES
   }
 
   private get queryCodeClassName(): string {
     const {focused} = this.state
 
     return classnames('query-editor--code', {focus: focused})
+  }
+
+  private showUntemplatedQuery = async () => {
+    const {value: queryText} = this.state
+
+    const rawText = await replaceQueryTemplates(
+      queryText,
+      this.props.config.source,
+      this.props.templates,
+      null
+    )
+
+    this.setState({editorValue: rawText, isViewingQueryText: true})
+  }
+
+  private setTemplateQuery(value: string) {
+    this.setState({
+      isTemplating: false,
+      isViewingQueryText: false,
+      selectedTemplate: this.defaultSelectedTemplate,
+      filteredTemplates: this.props.templates,
+      editorValue: value,
+      value,
+    })
   }
 
   private handleBlur = (): void => {
@@ -295,7 +342,7 @@ class QueryTextArea extends Component<Props, State> {
     const {templates} = this.props
     const {selectedTemplate} = this.state
 
-    if (this.state.isTemplating) {
+    if (this.state.isTemplating || this.state.isViewingQueryText) {
       return
     }
 
@@ -338,7 +385,9 @@ class QueryTextArea extends Component<Props, State> {
     ___: EditorChange,
     value: string
   ): void => {
-    this.setState({editorValue: value})
+    if (!this.state.isViewingQueryText) {
+      this.setState({editorValue: value})
+    }
   }
 }
 
