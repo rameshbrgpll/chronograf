@@ -1,3 +1,6 @@
+import uuid from 'uuid'
+import {range} from 'lodash'
+
 import AJAX from 'src/utils/ajax'
 import {Annotation} from 'src/types'
 
@@ -54,4 +57,48 @@ export const updateAnnotation = async (annotation: Annotation) => {
   const url = annotation.links.self
   const data = annoToRFC(annotation)
   await AJAX({method: 'PATCH', url, data})
+}
+
+const randInt = (min, max) =>
+  min + Math.floor(Math.random() * Math.floor(max - min))
+
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
+
+let fakeAnnotations
+
+export const getAnnotationsFake = async ({
+  since,
+  until,
+  labels = ['foo', 'bar', 'baz'],
+}): Promise<Annotation[]> => {
+  if (fakeAnnotations) {
+    return fakeAnnotations
+  }
+
+  if (!until) {
+    until = Date.now()
+  }
+
+  const numAnnotations = randInt(2, 10)
+  const numLabels = randInt(1, labels.length)
+
+  fakeAnnotations = range(0, numAnnotations).map(() => {
+    const selectedLabels = [...new Set(range(0, numLabels).map(i => labels[i]))]
+    const time = randInt(since, until)
+
+    return {
+      id: uuid.v4(),
+      startTime: time,
+      endTime: time,
+      text: 'No Name',
+      labels: selectedLabels,
+      links: {
+        self: '',
+      },
+    }
+  })
+
+  await delay(1000)
+
+  return fakeAnnotations
 }

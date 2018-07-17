@@ -2,6 +2,7 @@ import * as api from 'src/shared/apis/annotation'
 import {Dispatch} from 'redux'
 import * as AnnotationsActions from 'src/types/actions/annotations'
 import * as AnnotationsModels from 'src/types/annotations'
+import {getAnnotationsFake as getAnnotations} from 'src/shared/apis/annotation'
 
 export const editingAnnotation = (): AnnotationsActions.EditingAnnotationAction => ({
   type: 'EDITING_ANNOTATION',
@@ -83,7 +84,8 @@ export const getAnnotationsAsync: AnnotationsActions.GetAnnotationsDispatcher = 
 ): AnnotationsActions.GetAnnotationsThunk => async (
   dispatch: Dispatch<AnnotationsActions.LoadAnnotationsAction>
 ): Promise<void> => {
-  const annotations = await api.getAnnotations(indexUrl, since, until)
+  const annotations = await getAnnotations({url: indexUrl, since, until})
+
   dispatch(loadAnnotations(annotations))
 }
 
