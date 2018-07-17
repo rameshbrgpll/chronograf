@@ -361,7 +361,7 @@ class QueryTextArea extends Component<Props, State> {
     const {selectedTemplate} = this.state
     const isChanged = value !== this.state.value
 
-    if (!isChanged) {
+    if (!isChanged || this.state.isViewingQueryText) {
       return
     }
 
