@@ -6,13 +6,6 @@ import TemplateDrawer from 'src/shared/components/TemplateDrawer'
 import QueryStatus from 'src/shared/components/QueryStatus'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Controlled as ReactCodeMirror, IInstance} from 'react-codemirror2'
-import {
-  QUERY_TEMPLATES,
-  SEPARATOR_TEMPLATE,
-  QueryTemplate,
-  QueryTemplateList,
-} from 'src/data_explorer/constants'
-import Dropdown from 'src/shared/components/Dropdown'
 import {replace as replaceQueryTemplates} from 'src/shared/apis/query'
 
 import {Template, QueryConfig} from 'src/types'
@@ -60,16 +53,8 @@ const TEMPLATE_START = ':'.length
 
 const NOOP = () => {}
 const NULL_RESOLUTION = null
-
-const SHOW_QUERY_TEMPLATE_VALUES: QueryTemplate = {
-  text: 'SHOW RAW QUERY',
-  query: null,
-}
-
-const HIDE_QUERY_TEMPLATE_VALUES: QueryTemplate = {
-  text: 'HIDE RAW QUERY',
-  query: null,
-}
+const SHOW_TEMPLATES = 'Show Raw Query'
+const HIDE_TEMPLATES = 'Hide Raw Query'
 
 @ErrorHandling
 class QueryEditor extends Component<Props, State> {
@@ -99,11 +84,13 @@ class QueryEditor extends Component<Props, State> {
       isTemplating,
       selectedTemplate,
       filteredTemplates,
+      isShowingTemplateValues,
     } = this.state
 
     const options = {
       ...CODE_MIRROR_OPTIONS,
-      readOnly: this.state.isShowingTemplateValues,
+      readOnly: isShowingTemplateValues,
+      focused: isShowingTemplateValues,
     }
 
     return (
@@ -130,15 +117,19 @@ class QueryEditor extends Component<Props, State> {
           <div className="varmoji-container">
             <div className="varmoji-front">
               <QueryStatus status={status}>
-                <Dropdown
-                  items={this.queryTemplates}
-                  selected="Query Templates"
-                  onChoose={this.handleChooseMetaQuery}
-                  className="dropdown-140 query-editor--templates"
-                  buttonSize="btn-xs"
-                />
                 <button
-                  className="btn btn-xs btn-primary query-editor--submit"
+                  className={classnames('btn btn-xs btn-info', {
+                    disabled: isTemplating,
+                  })}
+                  onClick={this.handleToggleTemplateValues}
+                >
+                  {this.templateToggleStatus}
+                </button>
+                <button
+                  className={classnames(
+                    'btn btn-xs btn-primary query-editor--submit',
+                    {disabled: this.isDisabled}
+                  )}
                   onClick={this.handleUpdate}
                 >
                   Submit Query
@@ -164,36 +155,36 @@ class QueryEditor extends Component<Props, State> {
 
   public componentWillReceiveProps(nextProps: Props) {
     if (this.props.query !== nextProps.query) {
-      this.setTemplateQuery(nextProps.query)
+      this.setQueryValue(nextProps.query)
     }
   }
 
-  private handleChooseMetaQuery = (template: QueryTemplate): void => {
-    if (_.isEqual(template, SHOW_QUERY_TEMPLATE_VALUES)) {
-      this.showTemplateValues()
-    } else if (_.isEqual(template, HIDE_QUERY_TEMPLATE_VALUES)) {
-      this.setTemplateQuery(this.state.value)
+  private handleToggleTemplateValues = (): void => {
+    const {isShowingTemplateValues} = this.state
+
+    if (isShowingTemplateValues) {
+      this.setQueryValue(this.state.value)
     } else {
-      this.setTemplateQuery(template.query)
+      this.showTemplateValues()
     }
   }
 
-  private get queryTemplates(): QueryTemplateList {
-    return [this.viewTemplateValues, SEPARATOR_TEMPLATE, ...QUERY_TEMPLATES]
-  }
-
-  private get viewTemplateValues(): QueryTemplate {
-    if (this.state.isShowingTemplateValues) {
-      return HIDE_QUERY_TEMPLATE_VALUES
-    }
-
-    return SHOW_QUERY_TEMPLATE_VALUES
+  private get isDisabled(): boolean {
+    return this.state.isTemplating || this.state.isShowingTemplateValues
   }
 
   private get queryCodeClassName(): string {
     const {focused} = this.state
 
     return classnames('query-editor--code', {focus: focused})
+  }
+
+  private get templateToggleStatus(): string {
+    if (this.state.isShowingTemplateValues) {
+      return HIDE_TEMPLATES
+    }
+
+    return SHOW_TEMPLATES
   }
 
   private showTemplateValues = async (): Promise<void> => {
@@ -209,10 +200,11 @@ class QueryEditor extends Component<Props, State> {
     this.setState({
       editorValue: queryWithTemplateValues,
       isShowingTemplateValues: true,
+      focused: true,
     })
   }
 
-  private setTemplateQuery(value: string) {
+  private setQueryValue(value: string) {
     this.setState({
       isTemplating: false,
       isShowingTemplateValues: false,
@@ -225,6 +217,11 @@ class QueryEditor extends Component<Props, State> {
 
   private handleBlur = (): void => {
     this.setState({focused: false})
+
+    if (this.state.isShowingTemplateValues) {
+      this.setQueryValue(this.state.value)
+    }
+
     this.handleUpdate()
   }
 
@@ -409,7 +406,9 @@ class QueryEditor extends Component<Props, State> {
   }
 
   private handleUpdate = () => {
-    this.props.onUpdate(this.state.value)
+    if (!this.isDisabled) {
+      this.props.onUpdate(this.state.value)
+    }
   }
 
   private updateCode = (

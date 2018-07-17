@@ -31,24 +31,20 @@ export const INITIAL_HEIGHTS: InitialHeights = {
   visualization: '33.334%',
 }
 
+const SEPARATOR: string = 'SEPARATOR'
+
 export interface QueryTemplate {
   text: string
   query: string
 }
 
-interface Separator {
+export interface Separator {
   text: string
 }
 
 type Template = QueryTemplate | Separator
 
-export const SEPARATOR_TEMPLATE: Separator = {
-  text: 'SEPERATOR',
-}
-
-export type QueryTemplateList = Template[]
-
-export const QUERY_TEMPLATES: QueryTemplateList = [
+export const QUERY_TEMPLATES: Template[] = [
   {
     text: 'Show Databases',
     query: 'SHOW DATABASES',
@@ -61,7 +57,9 @@ export const QUERY_TEMPLATES: QueryTemplateList = [
     text: 'Drop Database',
     query: 'DROP DATABASE "db_name"',
   },
-  SEPARATOR_TEMPLATE,
+  {
+    text: `${SEPARATOR}`,
+  },
   {
     text: 'Show Measurements',
     query: 'SHOW MEASUREMENTS ON "db_name"',
@@ -75,7 +73,9 @@ export const QUERY_TEMPLATES: QueryTemplateList = [
     query:
       'SHOW TAG VALUES ON "db_name" FROM "measurement_name" WITH KEY = "tag_key"',
   },
-  SEPARATOR_TEMPLATE,
+  {
+    text: `${SEPARATOR}`,
+  },
   {
     text: 'Show Retention Policies',
     query: 'SHOW RETENTION POLICIES on "db_name"',
@@ -89,7 +89,9 @@ export const QUERY_TEMPLATES: QueryTemplateList = [
     text: 'Drop Retention Policy',
     query: 'DROP RETENTION POLICY "rp_name" ON "db_name"',
   },
-  SEPARATOR_TEMPLATE,
+  {
+    text: `${SEPARATOR}`,
+  },
   {
     text: 'Show Continuous Queries',
     query: 'SHOW CONTINUOUS QUERIES',
@@ -103,7 +105,9 @@ export const QUERY_TEMPLATES: QueryTemplateList = [
     text: 'Drop Continuous Query',
     query: 'DROP CONTINUOUS QUERY "cq_name" ON "db_name"',
   },
-  SEPARATOR_TEMPLATE,
+  {
+    text: `${SEPARATOR}`,
+  },
   {
     text: 'Show Users',
     query: 'SHOW USERS',
@@ -121,7 +125,9 @@ export const QUERY_TEMPLATES: QueryTemplateList = [
     text: 'Drop User',
     query: 'DROP USER "username"',
   },
-  SEPARATOR_TEMPLATE,
+  {
+    text: `${SEPARATOR}`,
+  },
   {
     text: 'Show Stats',
     query: 'SHOW STATS',
