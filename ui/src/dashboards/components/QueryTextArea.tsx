@@ -12,6 +12,7 @@ import {
   SHOW_QUERY_TEMPLATE_VALUES,
   HIDE_QUERY_TEMPLATE_VALUES,
   QueryTemplate,
+  QueryTemplateList,
 } from 'src/data_explorer/constants'
 import Dropdown from 'src/shared/components/Dropdown'
 import {replace as replaceQueryTemplates} from 'src/shared/apis/query'
@@ -169,7 +170,7 @@ class QueryTextArea extends Component<Props, State> {
     }
   }
 
-  private get queryTemplates() {
+  private get queryTemplates(): QueryTemplateList {
     return [this.viewTemplateValues, SEPARATOR_TEMPLATE, ...QUERY_TEMPLATES]
   }
 
@@ -229,7 +230,7 @@ class QueryTextArea extends Component<Props, State> {
     }
   }
 
-  private handleCloseDrawer = () => {
+  private handleCloseDrawer = (): void => {
     this.setState({isTemplating: false})
   }
 

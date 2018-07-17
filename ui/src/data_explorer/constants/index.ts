@@ -38,14 +38,14 @@ export interface QueryTemplate {
   query: string
 }
 
-export interface Separator {
+interface Separator {
   text: string
 }
 
 type Template = QueryTemplate | Separator
 
-export const SEPARATOR_TEMPLATE = {
-  text: `${SEPARATOR}`,
+export const SEPARATOR_TEMPLATE: Separator = {
+  text: 'SEPERATOR',
 }
 
 export const SHOW_QUERY_TEMPLATE_VALUES = {
@@ -56,7 +56,9 @@ export const HIDE_QUERY_TEMPLATE_VALUES = {
   text: 'HIDE RAW QUERY',
 }
 
-export const QUERY_TEMPLATES: Template[] = [
+export type QueryTemplateList = Template[]
+
+export const QUERY_TEMPLATES: QueryTemplateList = [
   {
     text: 'Show Databases',
     query: 'SHOW DATABASES',
