@@ -7,11 +7,6 @@ export interface HistogramDatum {
   group: string
 }
 
-export interface TimePeriod {
-  start: UnixTime
-  end: UnixTime
-}
-
 export type HistogramData = HistogramDatum[]
 
 export type TooltipAnchor = 'left' | 'right'
@@ -21,6 +16,11 @@ export interface Margins {
   right: number
   bottom: number
   left: number
+}
+
+export interface TimePeriod {
+  start: UnixTime
+  end: UnixTime
 }
 
 export interface HoverData {
@@ -36,3 +36,5 @@ export interface HistogramColor {
   group: string
   color: string
 }
+
+export type SortFn = (a: HistogramDatum, b: HistogramDatum) => number

@@ -138,6 +138,17 @@ export enum SeverityLevelOptions {
   debug = 'debug',
 }
 
+export const SEVERITY_SORTING_ORDER = {
+  [SeverityLevelOptions.emerg]: 1,
+  [SeverityLevelOptions.alert]: 2,
+  [SeverityLevelOptions.crit]: 3,
+  [SeverityLevelOptions.err]: 4,
+  [SeverityLevelOptions.warning]: 5,
+  [SeverityLevelOptions.notice]: 6,
+  [SeverityLevelOptions.info]: 7,
+  [SeverityLevelOptions.debug]: 8,
+}
+
 export const DEFAULT_SEVERITY_LEVELS = {
   [SeverityLevelOptions.emerg]: SeverityColorOptions.ruby,
   [SeverityLevelOptions.alert]: SeverityColorOptions.fire,
@@ -171,3 +182,12 @@ export enum EncodingVisibilityOptions {
   visible = 'visible',
   hidden = 'hidden',
 }
+
+export const TIME_RANGE_VALUES = [
+  {text: '1m', seconds: 60},
+  {text: '5m', seconds: 300},
+  {text: '10m', seconds: 600},
+  {text: '15m', seconds: 900},
+]
+
+export const SECONDS_TO_MS = 1000

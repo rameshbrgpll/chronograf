@@ -1,17 +1,21 @@
 import React, {Component} from 'react'
 import uuid from 'uuid'
 import _ from 'lodash'
+import moment from 'moment'
 import {connect} from 'react-redux'
 import {AutoSizer} from 'react-virtualized'
+import {Greys} from 'src/reusable_ui/types'
 
 import {
   setTableCustomTimeAsync,
   setTableRelativeTimeAsync,
   getSourceAndPopulateNamespacesAsync,
   setTimeRangeAsync,
+  setTimeBounds,
+  setTimeWindow,
+  setTimeMarker,
   setNamespaceAsync,
   executeQueriesAsync,
-  changeZoomAsync,
   setSearchTermAsync,
   addFilter,
   removeFilter,
@@ -29,14 +33,21 @@ import OptionsOverlay from 'src/logs/components/OptionsOverlay'
 import SearchBar from 'src/logs/components/LogsSearchBar'
 import FilterBar from 'src/logs/components/LogsFilterBar'
 import LogsTable from 'src/logs/components/LogsTable'
-import PointInTimeDropDown from 'src/logs/components/PointInTimeDropDown'
 import {getDeep} from 'src/utils/wrappers'
 import {colorForSeverity} from 'src/logs/utils/colors'
 import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechnology'
-import {SeverityFormatOptions} from 'src/logs/constants'
-import {Source, Namespace, TimeRange} from 'src/types'
+import {
+  SeverityFormatOptions,
+  SEVERITY_SORTING_ORDER,
+  SECONDS_TO_MS,
+} from 'src/logs/constants'
+import {Source, Namespace} from 'src/types'
 
-import {HistogramData, TimePeriod, HistogramColor} from 'src/types/histogram'
+import {
+  HistogramData,
+  HistogramColor,
+  HistogramDatum,
+} from 'src/types/histogram'
 import {
   Filter,
   SeverityLevelColor,
@@ -44,6 +55,11 @@ import {
   LogsTableColumn,
   LogConfig,
   TableData,
+  LiveUpdating,
+  TimeRange,
+  TimeWindow,
+  TimeMarker,
+  TimeBounds,
 } from 'src/types/logs'
 import {applyChangesToTableData} from 'src/logs/utils/table'
 
@@ -55,8 +71,10 @@ interface Props {
   getSource: (sourceID: string) => void
   getSources: () => void
   setTimeRangeAsync: (timeRange: TimeRange) => void
+  setTimeBounds: (timeBounds: TimeBounds) => void
+  setTimeWindow: (timeWindow: TimeWindow) => void
+  setTimeMarker: (timeMarker: TimeMarker) => void
   setNamespaceAsync: (namespace: Namespace) => void
-  changeZoomAsync: (timeRange: TimeRange) => void
   executeQueriesAsync: () => void
   setSearchTermAsync: (searchTerm: string) => void
   setTableRelativeTime: (time: number) => void
@@ -89,7 +107,7 @@ interface Props {
 
 interface State {
   searchString: string
-  liveUpdating: boolean
+  liveUpdating: LiveUpdating
   isOverlayVisible: boolean
   histogramColors: HistogramColor[]
   hasScrolled: boolean
@@ -117,7 +135,7 @@ class LogsPage extends Component<Props, State> {
 
     this.state = {
       searchString: '',
-      liveUpdating: false,
+      liveUpdating: LiveUpdating.Pause,
       isOverlayVisible: false,
       histogramColors: [],
       hasScrolled: false,
@@ -125,7 +143,7 @@ class LogsPage extends Component<Props, State> {
   }
 
   public componentDidUpdate() {
-    if (!this.props.currentSource) {
+    if (!this.props.currentSource && this.props.sources.length > 0) {
       this.props.getSource(this.props.sources[0].id)
     }
   }
@@ -138,7 +156,9 @@ class LogsPage extends Component<Props, State> {
       this.fetchNewDataset()
     }
 
-    this.startUpdating()
+    if (getDeep<string>(this.props, 'timeRange.timeOption', '') === 'now') {
+      this.startUpdating()
+    }
   }
 
   public componentWillUnmount() {
@@ -146,7 +166,7 @@ class LogsPage extends Component<Props, State> {
   }
 
   public render() {
-    const {searchTerm, filters, queryCount, timeRange, tableTime} = this.props
+    const {searchTerm, filters, queryCount, timeRange} = this.props
 
     return (
       <>
@@ -154,17 +174,6 @@ class LogsPage extends Component<Props, State> {
           {this.header}
           <div className="page-contents logs-viewer">
             <LogsGraphContainer>{this.chart}</LogsGraphContainer>
-            <div style={{height: '50px', position: 'relative'}}>
-              <div style={{position: 'absolute', right: '10px', top: '10px'}}>
-                <span style={{marginRight: '10px'}}>Go to </span>
-                <PointInTimeDropDown
-                  customTime={tableTime.custom}
-                  relativeTime={tableTime.relative}
-                  onChooseCustomTime={this.handleChooseCustomTime}
-                  onChooseRelativeTime={this.handleChooseRelativeTime}
-                />
-              </div>
-            </div>
             <SearchBar
               searchString={searchTerm}
               onSearch={this.handleSubmitSearch}
@@ -193,6 +202,7 @@ class LogsPage extends Component<Props, State> {
               severityLevelColors={this.severityLevelColors}
               hasScrolled={this.state.hasScrolled}
               tableInfiniteData={this.props.tableInfiniteData}
+              onChooseCustomTime={this.handleChooseCustomTime}
             />
           </div>
         </div>
@@ -207,6 +217,10 @@ class LogsPage extends Component<Props, State> {
   }
 
   private get tableScrollToRow() {
+    if (this.liveUpdatingStatus === LiveUpdating.Play) {
+      return 0
+    }
+
     if (this.loadingNewer && this.props.newRowsAdded) {
       this.loadingNewer = false
       return this.props.newRowsAdded || 0
@@ -222,12 +236,41 @@ class LogsPage extends Component<Props, State> {
     )
   }
 
-  private handleChooseCustomTime = (time: string) => {
+  private handleChooseCustomTime = async (time: string) => {
     this.props.setTableCustomTime(time)
+    const liveUpdating = LiveUpdating.Pause
+
+    this.setState({
+      hasScrolled: false,
+      liveUpdating,
+    })
+
+    await this.props.setTimeMarker({
+      timeOption: time,
+    })
+
+    this.handleSetTimeBounds()
   }
 
-  private handleChooseRelativeTime = (time: number) => {
+  private handleChooseRelativeTime = async (time: number) => {
     this.props.setTableRelativeTime(time)
+    this.setState({hasScrolled: false})
+
+    let timeOption = {
+      timeOption: moment()
+        .subtract(time, 'seconds')
+        .toISOString(),
+    }
+
+    let liveUpdating = LiveUpdating.Pause
+    if (time === 0) {
+      timeOption = {timeOption: 'now'}
+      liveUpdating = LiveUpdating.Play
+    }
+
+    this.setState({liveUpdating})
+    await this.props.setTimeMarker(timeOption)
+    this.handleSetTimeBounds()
   }
 
   private get tableData(): TableData {
@@ -257,7 +300,7 @@ class LogsPage extends Component<Props, State> {
   }
 
   private get isSpecificTimeRange(): boolean {
-    return !!getDeep(this.props, 'timeRange.upper', false)
+    return !!getDeep(this.props, 'tableTime.custom', false)
   }
 
   private startUpdating = () => {
@@ -267,7 +310,7 @@ class LogsPage extends Component<Props, State> {
 
     if (!this.isSpecificTimeRange) {
       this.interval = setInterval(this.handleInterval, 10000)
-      this.setState({liveUpdating: true})
+      this.setState({liveUpdating: LiveUpdating.Play})
     }
   }
 
@@ -281,7 +324,7 @@ class LogsPage extends Component<Props, State> {
     if (this.state.liveUpdating) {
       clearInterval(this.interval)
     }
-    this.setState({liveUpdating: false, hasScrolled: true})
+    this.setState({liveUpdating: LiveUpdating.Pause, hasScrolled: true})
   }
 
   private handleTagSelection = (selection: {tag: string; key: string}) => {
@@ -305,7 +348,10 @@ class LogsPage extends Component<Props, State> {
   }
 
   private get chart(): JSX.Element {
-    const {histogramData} = this.props
+    const {
+      histogramData,
+      timeRange: {timeOption},
+    } = this.props
     const {histogramColors} = this.state
 
     return (
@@ -316,12 +362,94 @@ class LogsPage extends Component<Props, State> {
             width={width}
             height={height}
             colorScale={colorForSeverity}
-            onZoom={this.handleChartZoom}
             colors={histogramColors}
-          />
+            onBarClick={this.handleBarClick}
+            sortBarGroups={this.handleSortHistogramBarGroups}
+          >
+            {({adjustedWidth, adjustedHeight, margins}) => {
+              const x = margins.left + adjustedWidth / 2
+              const y1 = margins.top
+              const y2 = margins.top + adjustedHeight
+              const textSize = 11
+              const markerSize = 5
+              const labelSize = 100
+
+              if (timeOption === 'now') {
+                return null
+              } else {
+                const lineContainerWidth = 3
+                const lineWidth = 1
+
+                return (
+                  <>
+                    <svg
+                      width={lineContainerWidth}
+                      height={height}
+                      style={{
+                        position: 'absolute',
+                        left: `${x}px`,
+                        top: '0px',
+                        transform: 'translateX(-50%)',
+                      }}
+                    >
+                      <line
+                        x1={(lineContainerWidth - lineWidth) / 2}
+                        x2={(lineContainerWidth - lineWidth) / 2}
+                        y1={y1 + markerSize / 2}
+                        y2={y2}
+                        stroke={Greys.White}
+                        strokeWidth={`${lineWidth}`}
+                      />
+                    </svg>
+                    <svg
+                      width={x}
+                      height={textSize + textSize / 2}
+                      style={{
+                        position: 'absolute',
+                        left: `${x - markerSize - labelSize}px`,
+                      }}
+                    >
+                      <text
+                        style={{fontSize: textSize, fontWeight: 600}}
+                        x={0}
+                        y={textSize}
+                        height={textSize}
+                        fill={Greys.Sidewalk}
+                      >
+                        Current Timestamp
+                      </text>
+                      <ellipse
+                        cx={labelSize + markerSize - 0.5}
+                        cy={textSize / 2 + markerSize / 2}
+                        rx={markerSize / 2}
+                        ry={markerSize / 2}
+                        fill={Greys.White}
+                      />
+                      <text
+                        style={{fontSize: textSize, fontWeight: 600}}
+                        x={labelSize + markerSize / 2 + textSize}
+                        y={textSize}
+                        height={textSize}
+                        fill={Greys.Sidewalk}
+                      >
+                        {moment(timeOption).format('YYYY-MM-DD | HH:mm:ss.SSS')}
+                      </text>
+                    </svg>
+                  </>
+                )
+              }
+            }}
+          </HistogramChart>
         )}
       </AutoSizer>
     )
+  }
+
+  private handleSortHistogramBarGroups = (
+    a: HistogramDatum,
+    b: HistogramDatum
+  ): number => {
+    return SEVERITY_SORTING_ORDER[b.group] - SEVERITY_SORTING_ORDER[a.group]
   }
 
   private get header(): JSX.Element {
@@ -331,25 +459,38 @@ class LogsPage extends Component<Props, State> {
       currentNamespaces,
       currentNamespace,
       timeRange,
+      tableTime,
     } = this.props
-
-    const {liveUpdating} = this.state
 
     return (
       <LogViewerHeader
-        liveUpdating={liveUpdating && !this.isSpecificTimeRange}
-        availableSources={sources}
         timeRange={timeRange}
+        onSetTimeWindow={this.handleSetTimeWindow}
+        liveUpdating={this.liveUpdatingStatus}
+        availableSources={sources}
         onChooseSource={this.handleChooseSource}
         onChooseNamespace={this.handleChooseNamespace}
-        onChooseTimerange={this.handleChooseTimerange}
         currentSource={currentSource}
         currentNamespaces={currentNamespaces}
         currentNamespace={currentNamespace}
         onChangeLiveUpdatingStatus={this.handleChangeLiveUpdatingStatus}
         onShowOptionsOverlay={this.handleToggleOverlay}
+        customTime={tableTime.custom}
+        relativeTime={tableTime.relative}
+        onChooseCustomTime={this.handleChooseCustomTime}
+        onChooseRelativeTime={this.handleChooseRelativeTime}
       />
     )
+  }
+
+  private get liveUpdatingStatus(): LiveUpdating {
+    const {liveUpdating} = this.state
+
+    if (liveUpdating === LiveUpdating.Play && !this.isSpecificTimeRange) {
+      return LiveUpdating.Play
+    }
+
+    return LiveUpdating.Pause
   }
 
   private get severityLevelColors(): SeverityLevelColor[] {
@@ -359,8 +500,8 @@ class LogsPage extends Component<Props, State> {
   private handleChangeLiveUpdatingStatus = (): void => {
     const {liveUpdating} = this.state
 
-    if (liveUpdating) {
-      this.setState({liveUpdating: false})
+    if (liveUpdating === LiveUpdating.Play) {
+      this.setState({liveUpdating: LiveUpdating.Pause})
       clearInterval(this.interval)
     } else {
       this.startUpdating()
@@ -369,7 +510,7 @@ class LogsPage extends Component<Props, State> {
 
   private handleSubmitSearch = (value: string): void => {
     this.props.setSearchTermAsync(value)
-    this.setState({liveUpdating: true})
+    this.setState({liveUpdating: LiveUpdating.Play})
   }
 
   private handleFilterDelete = (id: string): void => {
@@ -387,9 +528,38 @@ class LogsPage extends Component<Props, State> {
     this.props.executeQueriesAsync()
   }
 
-  private handleChooseTimerange = (timeRange: TimeRange) => {
-    this.props.setTimeRangeAsync(timeRange)
+  private handleBarClick = (time: string): void => {
+    const formattedTime = moment(time).toISOString()
+
+    this.handleChooseCustomTime(formattedTime)
+  }
+
+  private handleSetTimeBounds = async () => {
+    const {seconds, windowOption, timeOption} = this.props.timeRange
+    let lower = `now() - ${windowOption}`
+    let upper = null
+
+    if (timeOption !== 'now') {
+      const numberTimeOption = new Date(timeOption).valueOf()
+      const milliseconds = seconds * SECONDS_TO_MS
+      lower = moment(numberTimeOption - milliseconds).toISOString()
+      upper = moment(numberTimeOption + milliseconds).toISOString()
+    }
+
+    const timeBounds: TimeBounds = {
+      lower,
+      upper,
+    }
+
+    await this.props.setTimeBounds(timeBounds)
+
+    this.props.setTimeRangeAsync(this.props.timeRange)
     this.fetchNewDataset()
+  }
+
+  private handleSetTimeWindow = async (timeWindow: TimeWindow) => {
+    await this.props.setTimeWindow(timeWindow)
+    this.handleSetTimeBounds()
   }
 
   private handleChooseSource = (sourceID: string) => {
@@ -400,19 +570,7 @@ class LogsPage extends Component<Props, State> {
     this.props.setNamespaceAsync(namespace)
   }
 
-  private handleChartZoom = (t: TimePeriod) => {
-    const {start, end} = t
-    const timeRange = {
-      lower: new Date(start).toISOString(),
-      upper: new Date(end).toISOString(),
-    }
-
-    this.props.changeZoomAsync(timeRange)
-    this.setState({liveUpdating: true})
-  }
-
   private fetchNewDataset() {
-    this.setState({liveUpdating: true})
     this.props.executeQueriesAsync()
   }
 
@@ -521,9 +679,11 @@ const mapDispatchToProps = {
   getSource: getSourceAndPopulateNamespacesAsync,
   getSources: getSourcesAsync,
   setTimeRangeAsync,
+  setTimeBounds,
+  setTimeWindow,
+  setTimeMarker,
   setNamespaceAsync,
   executeQueriesAsync,
-  changeZoomAsync,
   setSearchTermAsync,
   addFilter,
   removeFilter,

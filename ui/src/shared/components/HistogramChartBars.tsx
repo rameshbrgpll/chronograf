@@ -12,6 +12,7 @@ import {
   TooltipAnchor,
   ColorScale,
   HistogramColor,
+  SortFn,
 } from 'src/types/histogram'
 
 const BAR_BORDER_RADIUS = 3
@@ -27,22 +28,6 @@ const getBarWidth = ({data, xScale, width}): number => {
   const barCount = Object.values(_.groupBy(dataInView, 'time')).length
 
   return Math.round(width / barCount - BAR_PADDING_SIDES)
-}
-
-type SortFn = (a: HistogramDatum, b: HistogramDatum) => number
-
-const getSortFn = (data: HistogramData): SortFn => {
-  const counts = {}
-
-  for (const d of data) {
-    if (counts[d.group]) {
-      counts[d.group] += d.value
-    } else {
-      counts[d.group] = d.value
-    }
-  }
-
-  return (a, b) => counts[b.group] - counts[a.group]
 }
 
 interface BarGroup {
@@ -73,14 +58,14 @@ const getBarGroups = ({
   colorScale,
   hoverData,
   colors,
+  sortBarGroups,
 }: Partial<Props>): BarGroup[] => {
   const barWidth = getBarWidth({data, xScale, width})
-  const sortFn = getSortFn(data)
   const visibleData = data.filter(d => d.value !== 0)
   const timeGroups = Object.values(_.groupBy(visibleData, 'time'))
 
   for (const timeGroup of timeGroups) {
-    timeGroup.sort(sortFn)
+    timeGroup.sort(sortBarGroups)
   }
 
   let hoverDataKeys = []
@@ -133,6 +118,25 @@ const getBarGroups = ({
   })
 }
 
+interface BarGroup {
+  key: string
+  clip: {
+    x: number
+    y: number
+    width: number
+    height: number
+  }
+  bars: Array<{
+    key: string
+    group: string
+    x: number
+    y: number
+    width: number
+    height: number
+    fill: string
+  }>
+  data: HistogramData
+}
 interface Props {
   width: number
   height: number
@@ -143,6 +147,8 @@ interface Props {
   hoverData?: HoverData
   colors: HistogramColor[]
   onHover: (h: HoverData) => void
+  onBarClick?: (time: string) => void
+  sortBarGroups: SortFn
 }
 
 interface State {
@@ -173,6 +179,7 @@ class HistogramChartBars extends PureComponent<Props, State> {
           data-key={key}
           onMouseOver={this.handleMouseOver}
           onMouseOut={this.handleMouseOut}
+          onClick={this.handleBarClick(group.data)}
         >
           <defs>
             <clipPath id={`histogram-chart-bars--clip-${key}`}>
@@ -205,6 +212,15 @@ class HistogramChartBars extends PureComponent<Props, State> {
     })
   }
 
+  private handleBarClick = data => (): void => {
+    const {onBarClick} = this.props
+
+    if (onBarClick) {
+      const time = data[0].time
+      onBarClick(time)
+    }
+  }
+
   private handleMouseOver = (e: MouseEvent<SVGGElement>): void => {
     const groupKey = getDeep<string>(e, 'currentTarget.dataset.key', '')
 
@@ -219,7 +235,7 @@ class HistogramChartBars extends PureComponent<Props, State> {
       return
     }
 
-    const {data} = hoverGroup
+    const data = _.get(hoverGroup, 'data').reverse()
     const barGroup = e.currentTarget as SVGGElement
     const boundingRect = barGroup.getBoundingClientRect()
     const boundingRectHeight = boundingRect.bottom - boundingRect.top

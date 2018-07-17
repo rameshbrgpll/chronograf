@@ -6,13 +6,13 @@ import {Grid, AutoSizer, InfiniteLoader} from 'react-virtualized'
 import {color} from 'd3-color'
 
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import ExpandableMessage from 'src/logs/components/expandable_message/ExpandableMessage'
 import {getDeep} from 'src/utils/wrappers'
 
 import {colorForSeverity} from 'src/logs/utils/colors'
 import {
   ROW_HEIGHT,
   calculateRowCharWidth,
-  calculateMessageHeight,
   getColumnFromData,
   getValueFromData,
   getValuesFromData,
@@ -59,6 +59,7 @@ interface Props {
     forward: TableData
     backward: TableData
   }
+  onChooseCustomTime: (time: string) => void
 }
 
 interface State {
@@ -72,16 +73,8 @@ interface State {
   visibleColumnsCount: number
 }
 
-const calculateScrollTop = (currentMessageWidth, data, scrollToRow) => {
-  const rowCharLimit = calculateRowCharWidth(currentMessageWidth)
-
-  return _.reduce(
-    _.range(0, scrollToRow),
-    (acc, index) => {
-      return acc + calculateMessageHeight(index, data, rowCharLimit)
-    },
-    0
-  )
+const calculateScrollTop = scrollToRow => {
+  return scrollToRow * ROW_HEIGHT
 }
 
 class LogsTable extends Component<Props, State> {
@@ -108,8 +101,8 @@ class LogsTable extends Component<Props, State> {
       scrollTop = 0
     }
 
-    if (scrollToRow) {
-      scrollTop = calculateScrollTop(currentMessageWidth, data, scrollToRow)
+    if (_.isNumber(scrollToRow)) {
+      scrollTop = calculateScrollTop(scrollToRow)
     }
 
     const scrollLeft = _.get(state, 'scrollLeft', 0)
@@ -164,8 +157,6 @@ class LogsTable extends Component<Props, State> {
       isMessageVisible,
       visibleColumnsCount,
     }
-
-    this.loadMoreAboveRows = _.throttle(this.loadMoreAboveRows, 5000)
   }
 
   public componentDidUpdate() {
@@ -244,6 +235,7 @@ class LogsTable extends Component<Props, State> {
                   autoHide={false}
                 >
                   <Grid
+                    rowHeight={ROW_HEIGHT}
                     {...this.gridProperties(
                       width,
                       height,
@@ -277,7 +269,6 @@ class LogsTable extends Component<Props, State> {
     const result: any = {
       width,
       height,
-      rowHeight: this.calculateRowHeight,
       rowCount: this.rowCount(),
       scrollLeft,
       scrollTop,
@@ -292,7 +283,7 @@ class LogsTable extends Component<Props, State> {
       },
     }
 
-    if (scrollToRow) {
+    if (_.isNumber(scrollToRow)) {
       result.scrollToRow = scrollToRow
     }
 
@@ -306,11 +297,10 @@ class LogsTable extends Component<Props, State> {
   private handleScrollbarScroll = (e: MouseEvent<JSX.Element>): void => {
     e.stopPropagation()
     e.preventDefault()
-    const {scrollTop, scrollLeft} = e.target as HTMLElement
+    const {scrollTop} = e.target as HTMLElement
 
     this.handleScroll({
       scrollTop,
-      scrollLeft,
     })
   }
 
@@ -321,7 +311,7 @@ class LogsTable extends Component<Props, State> {
 
       this.setState({scrollTop})
 
-      if (scrollTop < 200 && scrollTop < previousTop) {
+      if (scrollTop < 200 && scrollTop <= previousTop) {
         this.loadMoreAboveRows()
       }
 
@@ -353,7 +343,15 @@ class LogsTable extends Component<Props, State> {
     }
 
     const data = getValuesFromData(this.props.tableInfiniteData.forward)
-    const firstTime = getDeep(data, '0.0', new Date().getTime() / 1000)
+    const backwardData = getValuesFromData(
+      this.props.tableInfiniteData.backward
+    )
+    const firstTime = getDeep(
+      data,
+      '0.0',
+      getDeep(backwardData, '0.0', new Date().getTime())
+    )
+
     const {firstQueryTime} = this.state
     if (firstQueryTime && firstQueryTime > firstTime) {
       return
@@ -371,11 +369,12 @@ class LogsTable extends Component<Props, State> {
     }
 
     const data = getValuesFromData(this.props.tableInfiniteData.backward)
+    const forwardData = getValuesFromData(this.props.tableInfiniteData.forward)
 
     const lastTime = getDeep(
       data,
       `${data.length - 1}.0`,
-      new Date().getTime() / 1000
+      getDeep(forwardData, `${forwardData.length - 1}.0`, new Date().getTime())
     )
 
     // Guard against fetching on scrolling back up then down
@@ -446,20 +445,8 @@ class LogsTable extends Component<Props, State> {
   private calculateTotalHeight = (): number => {
     const data = getValuesFromData(this.props.data)
 
-    return _.reduce(
-      data,
-      (acc, __, index) => {
-        return (
-          acc +
-          calculateMessageHeight(index, this.props.data, this.rowCharLimit)
-        )
-      },
-      0
-    )
+    return data.length * ROW_HEIGHT
   }
-
-  private calculateRowHeight = ({index}: {index: number}): number =>
-    calculateMessageHeight(index, this.props.data, this.rowCharLimit)
 
   private headerRenderer = ({key, style, columnIndex}) => {
     const column = getColumnFromData(this.props.data, columnIndex)
@@ -526,7 +513,37 @@ class LogsTable extends Component<Props, State> {
       title = formattedValue
     }
 
+    if (column === 'message') {
+      formattedValue = <ExpandableMessage formattedValue={formattedValue} />
+    }
+
     const highlightRow = rowIndex === this.state.currentRow
+
+    if (column === 'timestamp') {
+      return (
+        <div
+          className={classnames('logs-viewer--cell', {
+            highlight: highlightRow,
+          })}
+          title={`Jump to '${title}'`}
+          key={key}
+          style={style}
+          data-index={rowIndex}
+          onMouseOver={this.handleMouseOver}
+        >
+          <div
+            data-tag-key={column}
+            data-tag-value={value}
+            onClick={this.handleTimestampClick(`${formattedValue}`)}
+            data-index={rowIndex}
+            onMouseOver={this.handleMouseOver}
+            className="logs-viewer--clickable"
+          >
+            {formattedValue}
+          </div>
+        </div>
+      )
+    }
 
     if (isClickable(column)) {
       return (
@@ -587,6 +604,12 @@ class LogsTable extends Component<Props, State> {
     const target = e.target as HTMLElement
     const index = target.dataset.index || target.parentElement.dataset.index
     this.setState({currentRow: +index})
+  }
+
+  private handleTimestampClick = (time: string) => () => {
+    const {onChooseCustomTime} = this.props
+    const formattedTime = moment(time, 'YYYY/MM/DD HH:mm:ss').toISOString()
+    onChooseCustomTime(formattedTime)
   }
 
   private handleTagClick = (e: MouseEvent<HTMLElement>) => {

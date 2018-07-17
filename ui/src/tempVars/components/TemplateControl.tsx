@@ -40,7 +40,6 @@ class TemplateControl extends PureComponent<Props, State> {
       templates,
       source,
       onCreateTemplate,
-      onUpdateTemplate,
       onPickValue,
     } = this.props
     const {isEditing} = this.state
@@ -54,22 +53,24 @@ class TemplateControl extends PureComponent<Props, State> {
         {template.type === TemplateType.Text ? (
           <TextTemplateSelector
             template={template}
-            onUpdateTemplate={onUpdateTemplate}
+            onPickValue={onPickValue}
             key={template.id}
           />
         ) : (
           <TemplateDropdown template={template} onPickValue={onPickValue} />
         )}
-        <Authorized requiredRole={EDITOR_ROLE}>
-          <label className="template-control--label">
-            {template.tempVar}
+
+        <label className="template-control--label">
+          {template.tempVar}
+          <Authorized requiredRole={EDITOR_ROLE}>
             <span
               className="icon cog-thick"
               onClick={this.handleShowSettings}
               data-test="edit"
             />
-          </label>
-        </Authorized>
+          </Authorized>
+        </label>
+
         <OverlayTechnology visible={isEditing}>
           <TemplateVariableEditor
             template={template}
