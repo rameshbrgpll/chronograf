@@ -72,7 +72,7 @@ const HIDE_QUERY_TEMPLATE_VALUES: QueryTemplate = {
 }
 
 @ErrorHandling
-class QueryTextArea extends Component<Props, State> {
+class QueryEditor extends Component<Props, State> {
   private editor: IInstance
 
   constructor(props: Props) {
@@ -421,4 +421,4 @@ class QueryTextArea extends Component<Props, State> {
   }
 }
 
-export default QueryTextArea
+export default QueryEditor
