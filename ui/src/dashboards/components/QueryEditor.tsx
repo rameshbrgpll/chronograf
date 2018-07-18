@@ -1,4 +1,4 @@
-import React, {Component} from 'react'
+import React, {Component, MouseEvent} from 'react'
 import _ from 'lodash'
 import classnames from 'classnames'
 
@@ -20,7 +20,7 @@ import {
 
 interface State {
   focused: boolean
-  value: string
+  queryText: string
   editorValue: string
   isTemplating: boolean
   selectedTemplate: {
@@ -56,22 +56,45 @@ const NULL_RESOLUTION = null
 const SHOW_TEMPLATES = 'Show Raw Query'
 const HIDE_TEMPLATES = 'Hide Raw Query'
 
+const BLURRED_EDITOR_STATE = {
+  focused: false,
+  isTemplating: false,
+  isShowingTemplateValues: false,
+}
+
 @ErrorHandling
 class QueryEditor extends Component<Props, State> {
-  private editor: IInstance
+  public static getDerivedStateFromProps(nextProps: Props, prevState: State) {
+    if (prevState.editorValue !== nextProps.query) {
+      return {
+        ...BLURRED_EDITOR_STATE,
+        selectedTemplate: {
+          tempVar: _.get(nextProps.templates, ['0', 'tempVar'], ''),
+        },
+        filteredTemplates: nextProps.templates,
+        editorValue: nextProps.query,
+        queryText: nextProps.query,
+      }
+    }
+
+    return null
+  }
+
+  private editor?: IInstance
 
   constructor(props: Props) {
     super(props)
+
     this.editor = null
 
     this.state = {
-      focused: false,
-      value: this.props.query,
-      editorValue: this.props.query,
-      isTemplating: false,
-      isShowingTemplateValues: false,
-      selectedTemplate: this.defaultSelectedTemplate,
-      filteredTemplates: this.props.templates,
+      ...BLURRED_EDITOR_STATE,
+      selectedTemplate: {
+        tempVar: _.get(props.templates, ['0', 'tempVar'], ''),
+      },
+      filteredTemplates: props.templates,
+      editorValue: props.query,
+      queryText: props.query,
     }
   }
 
@@ -79,6 +102,7 @@ class QueryEditor extends Component<Props, State> {
     const {
       config: {status},
     } = this.props
+
     const {
       editorValue,
       isTemplating,
@@ -90,7 +114,6 @@ class QueryEditor extends Component<Props, State> {
     const options = {
       ...CODE_MIRROR_OPTIONS,
       readOnly: isShowingTemplateValues,
-      focused: isShowingTemplateValues,
     }
 
     return (
@@ -100,15 +123,16 @@ class QueryEditor extends Component<Props, State> {
             className="query-editor--field"
             autoFocus={true}
             autoCursor={true}
-            value={editorValue}
             options={options}
-            onChange={this.handleChange}
-            onBlur={this.handleBlur}
-            onFocus={this.handleFocus}
-            onBeforeChange={this.updateCode}
             onTouchStart={NOOP}
-            onKeyDown={this.handleKeyDown}
-            editorDidMount={this.setEditor}
+            value={editorValue}
+            onChange={this.handleChange}
+            onBlur={this.handleBlurEditor}
+            onFocus={this.handleFocusEditor}
+            onKeyDown={this.handleKeyDownEditor}
+            onDblClick={this.handleUnmountEditor}
+            editorDidMount={this.handleMountEditor}
+            onBeforeChange={this.handleUpdateEditorValue}
           />
         </div>
         <div
@@ -118,10 +142,11 @@ class QueryEditor extends Component<Props, State> {
             <div className="varmoji-front">
               <QueryStatus status={status}>
                 <button
+                  onMouseDown={this.handleToggleFocus}
+                  onClick={this.handleToggleTemplateValues}
                   className={classnames('btn btn-xs btn-info', {
                     disabled: isTemplating,
                   })}
-                  onClick={this.handleToggleTemplateValues}
                 >
                   {this.templateToggleStatus}
                 </button>
@@ -153,17 +178,22 @@ class QueryEditor extends Component<Props, State> {
     )
   }
 
-  public componentWillReceiveProps(nextProps: Props) {
-    if (this.props.query !== nextProps.query) {
-      this.setQueryValue(nextProps.query)
-    }
+  private hideTemplateValues = (): void => {
+    this.setQueryValue(this.state.queryText)
+  }
+
+  private handleToggleFocus = (e: MouseEvent<HTMLButtonElement>): void => {
+    e.stopPropagation()
+    e.preventDefault()
+
+    this.editor.focus()
   }
 
   private handleToggleTemplateValues = (): void => {
     const {isShowingTemplateValues} = this.state
 
     if (isShowingTemplateValues) {
-      this.setQueryValue(this.state.value)
+      this.hideTemplateValues()
     } else {
       this.showTemplateValues()
     }
@@ -188,7 +218,7 @@ class QueryEditor extends Component<Props, State> {
   }
 
   private showTemplateValues = async (): Promise<void> => {
-    const {value: queryText} = this.state
+    const {queryText} = this.state
 
     const queryWithTemplateValues = await replaceQueryTemplates(
       queryText,
@@ -200,38 +230,10 @@ class QueryEditor extends Component<Props, State> {
     this.setState({
       editorValue: queryWithTemplateValues,
       isShowingTemplateValues: true,
-      focused: true,
     })
-  }
 
-  private setQueryValue(value: string) {
-    this.setState({
-      isTemplating: false,
-      isShowingTemplateValues: false,
-      selectedTemplate: this.defaultSelectedTemplate,
-      filteredTemplates: this.props.templates,
-      editorValue: value,
-      value,
-    })
-  }
-
-  private handleBlur = (): void => {
-    this.setState({focused: false})
-
-    if (this.state.isShowingTemplateValues) {
-      this.setQueryValue(this.state.value)
-    }
-
-    this.handleUpdate()
-  }
-
-  private handleFocus = (): void => {
-    this.setState({focused: true})
-  }
-
-  private get defaultSelectedTemplate() {
-    return {
-      tempVar: _.get(this.props.templates, ['0', 'tempVar'], ''),
+    if (this.editor) {
+      this.editor.focus()
     }
   }
 
@@ -249,19 +251,26 @@ class QueryEditor extends Component<Props, State> {
     this.closeDrawer()
   }
 
-  private closeDrawer = () => {
-    this.setState({
-      isTemplating: false,
-      selectedTemplate: this.defaultSelectedTemplate,
-    })
-  }
-
-  private setEditor = editor => {
+  private handleMountEditor = (editor: IInstance) => {
     this.editor = editor
   }
 
-  private handleKeyDown = (__, e) => {
-    const {isTemplating, value} = this.state
+  private handleUnmountEditor = () => {
+    this.editor = null
+  }
+
+  private handleBlurEditor = (): void => {
+    this.setState({focused: false})
+
+    this.hideTemplateValues()
+  }
+
+  private handleFocusEditor = (): void => {
+    this.setState({focused: true})
+  }
+
+  private handleKeyDownEditor = (__, e) => {
+    const {isTemplating, queryText} = this.state
 
     if (isTemplating) {
       switch (e.key) {
@@ -284,7 +293,7 @@ class QueryEditor extends Component<Props, State> {
       }
     } else if (e.key === 'Escape') {
       e.preventDefault()
-      this.setState({value, isTemplating: false})
+      this.setState({queryText, isTemplating: false})
     } else if (e.key === 'Enter') {
       e.preventDefault()
       this.handleUpdate()
@@ -304,16 +313,16 @@ class QueryEditor extends Component<Props, State> {
     const masked = applyMasks(editorValue)
     const matched = masked.match(MATCH_INCOMPLETE_TEMPLATES)
 
-    let templatedValue
+    let templatedEditorValue
     if (matched) {
-      templatedValue = insertTempVar(masked, newTempVar)
-      templatedValue = unMask(templatedValue)
+      templatedEditorValue = insertTempVar(masked, newTempVar)
+      templatedEditorValue = unMask(templatedEditorValue)
     }
 
-    const enterModifier = replaceWholeTemplate ? 0 : -1
-
-    const startIndex = TEMPLATE_START + masked.indexOf(_.get(matched, '0'))
-    const tempVarLength = newTempVar.length + enterModifier
+    const enterModifier = replaceWholeTemplate ? 1 : 0
+    const startIndex =
+      TEMPLATE_START + masked.indexOf(_.get(matched, '0')) - enterModifier
+    const tempVarLength = newTempVar.length - TEMPLATE_START + enterModifier
 
     let templateStart = start
     let templateEnd = start
@@ -331,7 +340,11 @@ class QueryEditor extends Component<Props, State> {
     }
 
     this.setState(
-      {editorValue: templatedValue, selectedTemplate, value: templatedValue},
+      {
+        editorValue: templatedEditorValue,
+        selectedTemplate,
+        queryText: templatedEditorValue,
+      },
       () => {
         this.editor.setSelection(templateEnd, templateStart)
       }
@@ -369,7 +382,7 @@ class QueryEditor extends Component<Props, State> {
   ): void => {
     const {templates} = this.props
     const {selectedTemplate} = this.state
-    const isChanged = value !== this.state.value
+    const isChanged = value !== this.state.queryText
 
     if (!isChanged || this.state.isShowingTemplateValues) {
       return
@@ -398,20 +411,43 @@ class QueryEditor extends Component<Props, State> {
         editorValue: value,
         selectedTemplate: newTemplate,
         filteredTemplates,
-        value,
+        queryText: value,
       })
     } else {
-      this.setState({isTemplating: false, value})
+      this.setState({isTemplating: false, queryText: value})
     }
   }
 
   private handleUpdate = () => {
     if (!this.isDisabled) {
-      this.props.onUpdate(this.state.value)
+      this.props.onUpdate(this.state.queryText)
     }
   }
 
-  private updateCode = (
+  private setQueryValue(queryText: string) {
+    const queryDefaultState = {
+      ...BLURRED_EDITOR_STATE,
+      selectedTemplate: {
+        tempVar: _.get(this.props.templates, ['0', 'tempVar'], ''),
+      },
+      filteredTemplates: this.props.templates,
+      editorValue: queryText,
+      queryText,
+    }
+
+    this.setState(queryDefaultState)
+  }
+
+  private closeDrawer = () => {
+    this.setState({
+      isTemplating: false,
+      selectedTemplate: {
+        tempVar: _.get(this.props.templates, ['0', 'tempVar'], ''),
+      },
+    })
+  }
+
+  private handleUpdateEditorValue = (
     __: IInstance,
     ___: EditorChange,
     value: string
