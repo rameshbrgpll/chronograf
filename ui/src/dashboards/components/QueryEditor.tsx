@@ -109,6 +109,7 @@ class QueryEditor extends Component<Props, State> {
       selectedTemplate,
       filteredTemplates,
       isShowingTemplateValues,
+      focused,
     } = this.state
 
     const options = {
@@ -120,7 +121,6 @@ class QueryEditor extends Component<Props, State> {
       <div className="query-editor">
         <div className={this.queryCodeClassName}>
           <ReactCodeMirror
-            className="query-editor--field"
             autoFocus={true}
             autoCursor={true}
             options={options}
@@ -136,7 +136,10 @@ class QueryEditor extends Component<Props, State> {
           />
         </div>
         <div
-          className={classnames('varmoji', {'varmoji-rotated': isTemplating})}
+          className={classnames('varmoji', {
+            'varmoji-rotated': isTemplating,
+            focus: focused,
+          })}
         >
           <div className="varmoji-container">
             <div className="varmoji-front">
@@ -144,9 +147,12 @@ class QueryEditor extends Component<Props, State> {
                 <button
                   onMouseDown={this.handleToggleFocus}
                   onClick={this.handleToggleTemplateValues}
-                  className={classnames('btn btn-xs btn-info', {
-                    disabled: isTemplating,
-                  })}
+                  className={classnames(
+                    'btn btn-xs btn-info query-editor--submit',
+                    {
+                      disabled: isTemplating,
+                    }
+                  )}
                 >
                   {this.templateToggleStatus}
                 </button>
