@@ -12,8 +12,8 @@ import {QueryConfig} from 'src/types/queries'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Query {
-  text: string
-  config: QueryConfig
+  text?: string
+  queryConfig: QueryConfig
 }
 
 interface Props {
