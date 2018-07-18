@@ -19,6 +19,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {Annotation, DygraphClass, Source} from 'src/types'
 import {UpdateAnnotationAction} from 'src/types/actions/annotations'
+import {AnnotationState} from 'src/shared/reducers/annotations'
 
 interface Props {
   dWidth: number
@@ -100,8 +101,12 @@ class Annotations extends Component<Props> {
   }
 }
 
-const mstp = ({annotations: {annotations, mode, isTempHovering}}) => ({
-  annotations,
+const mstp = ({
+  annotations: {annotations, mode, isTempHovering},
+}: {
+  annotations: AnnotationState
+}) => ({
+  annotations: Object.values(annotations).filter(a => !!a),
   mode: mode || 'NORMAL',
   isTempHovering,
 })

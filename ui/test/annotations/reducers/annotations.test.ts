@@ -28,30 +28,46 @@ const a2: Annotation = {
 const state: AnnotationState = {
   isTempHovering: false,
   mode: null,
-  annotations: [],
+  annotations: {},
 }
 
 describe('Shared.Reducers.annotations', () => {
   it('can load the annotations', () => {
-    const expected = [a1]
-    const actual = reducer(state, loadAnnotations(expected))
+    const expected = {
+      [a1.id]: a1,
+    }
+
+    const actual = reducer(state, loadAnnotations([a1]))
 
     expect(actual.annotations).toEqual(expected)
   })
   it('can update an annotation', () => {
-    const expected = [{...a1, startTime: 6666666666666}]
+    const updated = {...a1, startTime: 6666666666666}
+    const expected = {
+      [a1.id]: updated,
+    }
+
     const actual = reducer(
-      {...state, annotations: [a1]},
-      updateAnnotation(expected[0])
+      {...state, annotations: {[a1.id]: a1}},
+      updateAnnotation(updated)
     )
 
     expect(actual.annotations).toEqual(expected)
   })
 
   it('can delete an annotation', () => {
-    const expected = [a2]
+    const expected = {
+      [a1.id]: null,
+      [a2.id]: a2,
+    }
     const actual = reducer(
-      {...state, annotations: [a1, a2]},
+      {
+        ...state,
+        annotations: {
+          [a1.id]: a1,
+          [a2.id]: a2,
+        },
+      },
       deleteAnnotation(a1)
     )
 
@@ -59,7 +75,7 @@ describe('Shared.Reducers.annotations', () => {
   })
 
   it('can add an annotation', () => {
-    const expected = [a1]
+    const expected = {[a1.id]: a1}
     const actual = reducer(state, addAnnotation(a1))
 
     expect(actual.annotations).toEqual(expected)

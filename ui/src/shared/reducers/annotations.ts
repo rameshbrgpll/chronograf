@@ -6,13 +6,15 @@ import {Annotation} from 'src/types'
 export interface AnnotationState {
   mode: string
   isTempHovering: boolean
-  annotations: Annotation[]
+  annotations: {
+    [annotationId: string]: Annotation
+  }
 }
 
 const initialState = {
   mode: null,
   isTempHovering: false,
-  annotations: [],
+  annotations: {},
 }
 
 const annotationsReducer = (
@@ -35,15 +37,14 @@ const annotationsReducer = (
     }
 
     case 'ADDING_ANNOTATION': {
-      const annotations = state.annotations.filter(
-        a => a.id !== TEMP_ANNOTATION.id
-      )
-
       return {
         ...state,
         mode: ADDING,
         isTempHovering: true,
-        annotations: [...annotations, TEMP_ANNOTATION],
+        annotations: {
+          ...state.annotations,
+          [TEMP_ANNOTATION.id]: TEMP_ANNOTATION,
+        },
       }
     }
 
@@ -56,15 +57,14 @@ const annotationsReducer = (
     }
 
     case 'DISMISS_ADDING_ANNOTATION': {
-      const annotations = state.annotations.filter(
-        a => a.id !== TEMP_ANNOTATION.id
-      )
-
       return {
         ...state,
         isTempHovering: false,
         mode: null,
-        annotations,
+        annotations: {
+          ...state.annotations,
+          [TEMP_ANNOTATION.id]: null,
+        },
       }
     }
 
@@ -87,7 +87,11 @@ const annotationsReducer = (
     }
 
     case 'LOAD_ANNOTATIONS': {
-      const {annotations} = action.payload
+      const annotations = {...state.annotations}
+
+      for (const annotation of action.payload.annotations) {
+        annotations[annotation.id] = annotation
+      }
 
       return {
         ...state,
@@ -97,33 +101,37 @@ const annotationsReducer = (
 
     case 'UPDATE_ANNOTATION': {
       const {annotation} = action.payload
-      const annotations = state.annotations.map(
-        a => (a.id === annotation.id ? annotation : a)
-      )
 
       return {
         ...state,
-        annotations,
+        annotations: {
+          ...state.annotations,
+          [annotation.id]: annotation,
+        },
       }
     }
 
     case 'DELETE_ANNOTATION': {
       const {annotation} = action.payload
-      const annotations = state.annotations.filter(a => a.id !== annotation.id)
 
       return {
         ...state,
-        annotations,
+        annotations: {
+          ...state.annotations,
+          [annotation.id]: null,
+        },
       }
     }
 
     case 'ADD_ANNOTATION': {
       const {annotation} = action.payload
-      const annotations = [...state.annotations, annotation]
 
       return {
         ...state,
-        annotations,
+        annotations: {
+          ...state.annotations,
+          [annotation.id]: annotation,
+        },
       }
     }
   }
