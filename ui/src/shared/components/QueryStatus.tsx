@@ -6,9 +6,24 @@ import {Status} from 'src/types'
 interface Props {
   status: Status
   children?: ReactNode
+  isShowingTemplateValues?: boolean
 }
 
-const QueryStatus: SFC<Props> = ({status, children}) => {
+const QueryStatus: SFC<Props> = ({
+  status,
+  children,
+  isShowingTemplateValues,
+}) => {
+  if (isShowingTemplateValues) {
+    return (
+      <div className="query-editor--status">
+        <span className="query-status-output">
+          Previewing substituted Template Variable values, editing is disabled
+        </span>
+      </div>
+    )
+  }
+
   if (!status) {
     return <div className="query-editor--status">{children}</div>
   }
