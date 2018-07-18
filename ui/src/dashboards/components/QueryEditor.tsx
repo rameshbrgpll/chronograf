@@ -53,7 +53,7 @@ const TEMPLATE_START = ':'.length
 
 const NOOP = () => {}
 const NULL_RESOLUTION = null
-const SHOW_TEMPLATES = 'Show Raw Query'
+const SHOW_TEMPLATES = 'Show Template Values'
 const HIDE_TEMPLATES = 'Hide Raw Query'
 
 const BLURRED_EDITOR_STATE = {
