@@ -1,7 +1,22 @@
 import React, {PureComponent} from 'react'
+import {connect} from 'react-redux'
 
-class AnnotationControlBar extends PureComponent {
+import AnnotationEditor from 'src/shared/components/AnnotationEditor'
+import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechnology'
+
+import {setEditingAnnotation as setEditingAnnotation_} from 'src/shared/actions/annotations'
+
+import {Annotation} from 'src/types'
+
+interface Props {
+  editingAnnotation?: Annotation
+  setEditingAnnotation: typeof setEditingAnnotation_
+}
+
+class AnnotationControlBar extends PureComponent<Props> {
   public render() {
+    const {editingAnnotation} = this.props
+
     return (
       <div className="annotation-control-bar">
         <div className="annotation-control-bar--lhs">
@@ -13,6 +28,12 @@ class AnnotationControlBar extends PureComponent {
             Add Annotation
           </div>
         </div>
+        <OverlayTechnology visible={!!editingAnnotation}>
+          <AnnotationEditor
+            annotation={editingAnnotation}
+            cancel={this.handleCancelEdits}
+          />
+        </OverlayTechnology>
       </div>
     )
   }
@@ -25,6 +46,22 @@ class AnnotationControlBar extends PureComponent {
       </div>
     )
   }
+
+  private handleCancelEdits = (): void => {
+    const {setEditingAnnotation} = this.props
+
+    setEditingAnnotation(null)
+  }
 }
 
-export default AnnotationControlBar
+const mstp = ({annotations: {annotations, editingAnnotation}}) => {
+  return {
+    editingAnnotation: annotations[editingAnnotation],
+  }
+}
+
+const mdtp = {
+  setEditingAnnotation: setEditingAnnotation_,
+}
+
+export default connect(mstp, mdtp)(AnnotationControlBar)

@@ -68,6 +68,13 @@ export const addAnnotation = (
   },
 })
 
+export const setEditingAnnotation = (
+  id: string | null
+): AnnotationsActions.SetEditingAnnotationAction => ({
+  type: 'SET_EDITING_ANNOTATION',
+  payload: id,
+})
+
 export const addAnnotationAsync = (
   createUrl: string,
   annotation: AnnotationsModels.Annotation

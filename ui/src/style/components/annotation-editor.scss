@@ -1,0 +1,11 @@
+.annotation-editor .overlay-heading {
+  justify-content: space-between;
+}
+
+.annotation-editor--controls {
+  display: flex;
+
+  button:first-child {
+    margin-right: 5px;
+  }
+}

@@ -13,6 +13,7 @@ export type Action =
   | UpdateAnnotationAction
   | DeleteAnnotationAction
   | AddAnnotationAction
+  | SetEditingAnnotationAction
 
 export interface EditingAnnotationAction {
   type: 'EDITING_ANNOTATION'
@@ -70,6 +71,11 @@ export interface AddAnnotationAction {
   payload: {
     annotation: AnnotationData.Annotation
   }
+}
+
+export interface SetEditingAnnotationAction {
+  type: 'SET_EDITING_ANNOTATION'
+  payload: string | null
 }
 
 export type GetAnnotationsDispatcher = (

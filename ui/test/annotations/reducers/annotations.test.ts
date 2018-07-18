@@ -29,6 +29,7 @@ const state: AnnotationState = {
   isTempHovering: false,
   mode: null,
   annotations: {},
+  editingAnnotation: null,
 }
 
 describe('Shared.Reducers.annotations', () => {

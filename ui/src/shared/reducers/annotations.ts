@@ -9,12 +9,14 @@ export interface AnnotationState {
   annotations: {
     [annotationId: string]: Annotation
   }
+  editingAnnotation: string | null
 }
 
 const initialState = {
   mode: null,
   isTempHovering: false,
   annotations: {},
+  editingAnnotation: null,
 }
 
 const annotationsReducer = (
@@ -132,6 +134,13 @@ const annotationsReducer = (
           ...state.annotations,
           [annotation.id]: annotation,
         },
+      }
+    }
+
+    case 'SET_EDITING_ANNOTATION': {
+      return {
+        ...state,
+        editingAnnotation: action.payload,
       }
     }
   }
