@@ -115,6 +115,7 @@ class QueryEditor extends Component<Props, State> {
     const options = {
       ...CODE_MIRROR_OPTIONS,
       readOnly: isShowingTemplateValues,
+      theme: isShowingTemplateValues ? '' : CODE_MIRROR_OPTIONS.theme,
     }
 
     return (
@@ -139,11 +140,16 @@ class QueryEditor extends Component<Props, State> {
           className={classnames('varmoji', {
             'varmoji-rotated': isTemplating,
             focus: focused,
+            'read-only': isShowingTemplateValues,
           })}
+          onClick={this.handleVarmojiFocus}
         >
           <div className="varmoji-container">
             <div className="varmoji-front">
-              <QueryStatus status={status}>
+              <QueryStatus
+                status={status}
+                isShowingTemplateValues={isShowingTemplateValues}
+              >
                 <button
                   onMouseDown={this.handleToggleFocus}
                   onClick={this.handleToggleTemplateValues}
@@ -191,8 +197,9 @@ class QueryEditor extends Component<Props, State> {
   private handleToggleFocus = (e: MouseEvent<HTMLButtonElement>): void => {
     e.stopPropagation()
     e.preventDefault()
-
-    this.editor.focus()
+    if (this.editor) {
+      this.editor.focus()
+    }
   }
 
   private handleToggleTemplateValues = (): void => {
@@ -210,9 +217,12 @@ class QueryEditor extends Component<Props, State> {
   }
 
   private get queryCodeClassName(): string {
-    const {focused} = this.state
+    const {focused, isShowingTemplateValues} = this.state
 
-    return classnames('query-editor--code', {focus: focused})
+    return classnames('query-editor--code', {
+      focus: focused,
+      'read-only': isShowingTemplateValues,
+    })
   }
 
   private get templateToggleStatus(): string {
@@ -273,6 +283,13 @@ class QueryEditor extends Component<Props, State> {
 
   private handleFocusEditor = (): void => {
     this.setState({focused: true})
+  }
+
+  private handleVarmojiFocus = (): void => {
+    this.setState({focused: true})
+    if (this.editor) {
+      this.editor.focus()
+    }
   }
 
   private handleKeyDownEditor = (__, e) => {

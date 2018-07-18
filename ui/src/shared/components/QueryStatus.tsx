@@ -18,6 +18,7 @@ const QueryStatus: SFC<Props> = ({
     return (
       <div className="query-editor--status">
         <span className="query-status-output">
+          <span className="icon eye-open" />
           Previewing substituted Template Variable values, editing is disabled
         </span>
       </div>
