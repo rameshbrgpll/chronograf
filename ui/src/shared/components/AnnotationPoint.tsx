@@ -76,7 +76,6 @@ class AnnotationPoint extends Component<Props, State> {
         />
         <div className={flagClass} />
         <AnnotationTooltip
-          isEditing={isEditing}
           timestamp={annotation.startTime}
           annotation={annotation}
           onMouseLeave={this.handleMouseLeave}

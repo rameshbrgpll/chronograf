@@ -168,7 +168,6 @@ class AnnotationSpan extends Component<Props, State> {
       <div className={markerClass} style={markerStyles}>
         {showTooltip && (
           <AnnotationTooltip
-            isEditing={isEditing}
             timestamp={annotation.startTime}
             annotation={annotation}
             onMouseLeave={this.handleMouseLeave}
@@ -222,7 +221,6 @@ class AnnotationSpan extends Component<Props, State> {
       <div className={markerClass} style={markerStyles}>
         {showTooltip && (
           <AnnotationTooltip
-            isEditing={isEditing}
             timestamp={annotation.endTime}
             annotation={annotation}
             onMouseLeave={this.handleMouseLeave}
