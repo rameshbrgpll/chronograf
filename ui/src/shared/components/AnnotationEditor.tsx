@@ -3,24 +3,36 @@ import React, {PureComponent} from 'react'
 import OverlayContainer from 'src/reusable_ui/components/overlays/OverlayContainer'
 import OverlayHeading from 'src/reusable_ui/components/overlays/OverlayHeading'
 import OverlayBody from 'src/reusable_ui/components/overlays/OverlayBody'
+import AnnotationEditorBody from 'src/shared/components/AnnotationEditorBody'
 
 import {Annotation} from 'src/types'
 
 interface Props {
   annotation: Annotation
-  cancel: () => void
+  onCancel: () => void
+  onDelete: () => Promise<void>
 }
 
-class AnnotationEditor extends PureComponent<Props> {
+interface State {
+  nextAnnotation: Annotation | null
+}
+
+class AnnotationEditor extends PureComponent<Props, State> {
+  constructor(props) {
+    super(props)
+
+    this.state = {nextAnnotation: null}
+  }
+
   public render() {
-    const {cancel} = this.props
+    const {annotation, onDelete, onCancel} = this.props
 
     return (
       <div className="annotation-editor">
-        <OverlayContainer maxWidth={650}>
+        <OverlayContainer maxWidth={600}>
           <OverlayHeading title={'Edit Annotation'}>
             <div className="annotation-editor--controls">
-              <button className="btn btn-sm btn-default" onClick={cancel}>
+              <button className="btn btn-sm btn-default" onClick={onCancel}>
                 Cancel
               </button>
               <button
@@ -31,14 +43,27 @@ class AnnotationEditor extends PureComponent<Props> {
               </button>
             </div>
           </OverlayHeading>
-          <OverlayBody />
+          <OverlayBody>
+            <AnnotationEditorBody
+              key={annotation.id}
+              annotation={annotation}
+              onSetNextAnnotation={this.handleSetNextAnnotation}
+              onDelete={onDelete}
+            />
+          </OverlayBody>
         </OverlayContainer>
       </div>
     )
   }
 
   private get canSave(): boolean {
-    return false
+    return !!this.state.nextAnnotation
+  }
+
+  private handleSetNextAnnotation = (
+    nextAnnotation: Annotation | null
+  ): void => {
+    this.setState({nextAnnotation})
   }
 }
 

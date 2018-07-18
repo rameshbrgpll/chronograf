@@ -127,7 +127,7 @@ class DashboardPage extends Component<Props, State> {
       selectedCell: null,
       windowHeight: window.innerHeight,
       dashboardLinks: EMPTY_LINKS,
-      showToolbars: false,
+      showToolbars: true,
     }
   }
 
