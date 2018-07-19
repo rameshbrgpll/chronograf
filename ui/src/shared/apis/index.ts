@@ -376,6 +376,23 @@ export const getServices = async (url: string): Promise<Service[]> => {
   }
 }
 
+export const getService = async (
+  url: string,
+  serviceID: string
+): Promise<Service> => {
+  try {
+    const {data} = await AJAX({
+      url: `${url}/{${serviceID}`,
+      method: 'GET',
+    })
+
+    return data.services
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export const createService = async (
   source: Source,
   {
